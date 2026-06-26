@@ -1,0 +1,1688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UHS Enterprise Implementation Dashboard</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f4f6f9;
+    color: #1a1a2e;
+    padding: 20px;
+    font-size: 13px;
+  }
+  header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 18px 24px;
+    margin-bottom: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  header h1 { font-size: 1.25rem; font-weight: 700; }
+  header .subtitle { font-size: 0.75rem; opacity: 0.65; margin-top: 3px; }
+  header .date-badge {
+    background: rgba(255,255,255,0.13);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.78rem;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .section-label {
+    font-size: 0.67rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #6b7280;
+    margin: 20px 0 9px;
+  }
+  .kpi-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+  .kpi-card {
+    background: white;
+    border-radius: 10px;
+    padding: 14px 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    border-left: 4px solid #e5e7eb;
+  }
+  .kpi-card.green  { border-left-color: #10b981; }
+  .kpi-card.blue   { border-left-color: #3b82f6; }
+  .kpi-card.amber  { border-left-color: #f59e0b; }
+  .kpi-card.red    { border-left-color: #ef4444; }
+  .kpi-card.purple { border-left-color: #8b5cf6; }
+  .kpi-label { font-size: 0.67rem; color: #6b7280; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi-value { font-size: 1.5rem; font-weight: 800; margin: 3px 0 2px; color: #111827; line-height: 1; }
+  .kpi-sub   { font-size: 0.68rem; color: #9ca3af; }
+
+  .card {
+    background: white;
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+  }
+  .card h3 {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    border-bottom: 1px solid #f3f4f6;
+    padding-bottom: 8px;
+  }
+  .two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  .pill {
+    display: inline-block;
+    border-radius: 20px;
+    padding: 2px 8px;
+    font-size: 0.63rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .pill.live       { background: #d1fae5; color: #065f46; }
+  .pill.inflight   { background: #dbeafe; color: #1e40af; }
+  .pill.blocked    { background: #fee2e2; color: #991b1b; }
+  .pill.notstarted { background: #f3f4f6; color: #6b7280; }
+  .pill.planned    { background: #ede9fe; color: #5b21b6; }
+  .pill.high       { background: #fee2e2; color: #991b1b; }
+  .pill.medium     { background: #fef3c7; color: #92400e; }
+  .pill.low        { background: #d1fae5; color: #065f46; }
+  .pill.acute      { background: #dbeafe; color: #1e40af; }
+  .pill.bh         { background: #ede9fe; color: #5b21b6; }
+
+  /* Active projects table */
+  .proj-table { width: 100%; border-collapse: collapse; font-size: 0.71rem; }
+  .proj-table th {
+    background: #f9fafb; color: #6b7280; font-weight: 700;
+    padding: 6px 8px; text-align: left;
+    border-bottom: 2px solid #e5e7eb;
+    font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.4px;
+    white-space: nowrap;
+  }
+  .proj-table td { padding: 7px 8px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+  .proj-table tr:last-child td { border-bottom: none; }
+  .proj-table tr:hover td { background: #fafafa; }
+
+  /* Rollout tracker table */
+  .tracker-table { width: 100%; border-collapse: collapse; font-size: 0.71rem; }
+  .tracker-table th {
+    background: #f9fafb; color: #6b7280; font-weight: 700;
+    padding: 6px 8px; text-align: left;
+    border-bottom: 2px solid #e5e7eb;
+    font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.4px;
+    white-space: nowrap;
+  }
+  .tracker-table td { padding: 7px 8px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+  .tracker-table tr:last-child td { border-bottom: none; }
+  .tracker-table tr:hover td { background: #fafafa; }
+  .wave-badge {
+    display: inline-block;
+    color: white;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 0.62rem;
+    font-weight: 700;
+  }
+  .pct-bar  { background: #f3f4f6; border-radius: 3px; height: 6px; min-width: 50px; }
+  .pct-fill { background: #3b82f6; border-radius: 3px; height: 100%; }
+  .pct-fill.done    { background: #10b981; }
+  .pct-fill.blocked { background: #ef4444; }
+
+  /* Gantt */
+  .gantt-bar {
+    position: absolute;
+    top: 2px; bottom: 2px;
+    border-radius: 3px;
+    display: flex; align-items: center;
+    padding: 0 5px;
+    font-size: 0.58rem;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .bar-w1      { background: #10b981; }
+  .bar-w2      { background: #3b82f6; }
+  .bar-w3      { background: #8b5cf6; }
+  .bar-blocked { background: #fca5a5; color: #7f1d1d; }
+
+  /* Risks */
+  .risk-row { display: flex; gap: 10px; align-items: flex-start; padding: 9px 0; border-bottom: 1px solid #f3f4f6; }
+  .risk-row:last-child { border-bottom: none; }
+  .risk-icon { font-size: 0.9rem; flex-shrink: 0; margin-top: 1px; }
+  .risk-title  { font-size: 0.76rem; font-weight: 700; color: #111827; }
+  .risk-detail { font-size: 0.69rem; color: #6b7280; margin-top: 2px; line-height: 1.45; }
+
+  /* Agenda */
+  .agenda-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid #f3f4f6; }
+  .agenda-row:last-child { border-bottom: none; }
+  .agenda-num {
+    background: #1a1a2e; color: white;
+    width: 20px; height: 20px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.62rem; font-weight: 700; flex-shrink: 0;
+  }
+  .agenda-topic { font-size: 0.78rem; font-weight: 700; color: #111827; }
+  .agenda-pts   { font-size: 0.69rem; color: #6b7280; margin-top: 2px; line-height: 1.5; }
+
+  footer { text-align: center; margin-top: 20px; font-size: 0.65rem; color: #9ca3af; }
+
+  /* Tabs */
+  .tab-bar { display: flex; gap: 4px; margin-bottom: 12px; }
+  .tab-btn {
+    padding: 6px 14px; border-radius: 6px; font-size: 0.72rem; font-weight: 700;
+    border: 1px solid #e5e7eb; background: white; color: #6b7280; cursor: pointer;
+  }
+  .tab-btn.active { background: #1a1a2e; color: white; border-color: #1a1a2e; }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* Weekly status tab */
+  .goals-box {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+  }
+  .goals-box h4 { font-size: 0.7rem; font-weight: 700; color: #1e40af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .goals-box ul { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+  .goals-box ul li { font-size: 0.72rem; color: #1e3a8a; display: flex; gap: 6px; }
+  .goals-box ul li::before { content: "▸"; color: #3b82f6; flex-shrink: 0; }
+
+  /* Follow-up action items — checkboxes + editable owner */
+  .action-table { width: 100%; border-collapse: collapse; font-size: 0.71rem; }
+  .action-table th {
+    background: #f9fafb; color: #6b7280; font-weight: 700;
+    padding: 6px 8px; text-align: left;
+    border-bottom: 2px solid #e5e7eb;
+    font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.4px;
+    white-space: nowrap;
+  }
+  .action-table td { padding: 7px 8px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+  .action-table tr:last-child td { border-bottom: none; }
+  .action-table tr:hover td { background: #fafafa; }
+  .action-check { width: 15px; height: 15px; cursor: pointer; accent-color: #1a1a2e; margin: 0; }
+  .action-row.done .action-task { text-decoration: line-through; color: #9ca3af; }
+  .action-row.done .action-task strong { color: #9ca3af; }
+  .action-owner {
+    min-width: 80px; outline: none;
+    border-bottom: 1px dashed transparent;
+    border-radius: 3px; padding: 1px 4px; cursor: text;
+  }
+  .action-owner:hover { border-bottom-color: #c7cdd6; background: #fafbfc; }
+  .action-owner:focus { border-bottom-color: #3b82f6; background: #eff6ff; }
+  .action-hint { font-size: 0.62rem; color: #9ca3af; margin-bottom: 8px; font-style: italic; }
+
+  /* Executive header — status cards */
+  .exec-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .status-card {
+    background: white; border-radius: 10px; padding: 14px 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07); border-top: 5px solid #e5e7eb;
+  }
+  .status-card.green { border-top-color: #10b981; }
+  .status-card.amber { border-top-color: #f59e0b; }
+  .status-card.red   { border-top-color: #ef4444; }
+  .sc-label { font-size: 0.64rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #6b7280; }
+  .sc-status { font-size: 1.05rem; font-weight: 800; margin-top: 6px; color: #111827; }
+  .sc-sub { font-size: 0.64rem; color: #9ca3af; margin-top: 3px; line-height: 1.35; }
+
+  /* Trend tiles */
+  .trend-up   { color: #10b981; font-weight: 700; }
+  .trend-down { color: #ef4444; font-weight: 700; }
+  .trend-flat { color: #9ca3af; font-weight: 700; }
+  .trend-new  { color: #3b82f6; font-weight: 700; }
+
+  /* Status dots + severity chips */
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; }
+  .dot.green { background: #10b981; } .dot.amber { background: #f59e0b; } .dot.red { background: #ef4444; }
+  .sev { font-weight: 700; border-radius: 5px; padding: 1px 8px; font-size: 0.64rem; white-space: nowrap; }
+  .sev.red   { background: #fee2e2; color: #991b1b; }
+  .sev.amber { background: #fef3c7; color: #92400e; }
+  .sev.green { background: #d1fae5; color: #065f46; }
+
+  /* BH command center — funnel */
+  .funnel-row { display: flex; gap: 6px; margin-top: 8px; }
+  .funnel-cell { flex: 1; background: #f9fafb; border: 1px solid #f0f1f3; border-radius: 7px; padding: 8px 6px; text-align: center; }
+  .funnel-cell .fc-num { font-size: 1.15rem; font-weight: 800; color: #111827; line-height: 1; }
+  .funnel-cell .fc-lab { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.4px; color: #6b7280; margin-top: 4px; }
+  .funnel-cell.total { background: #eef2ff; border-color: #e0e7ff; }
+  .funnel-cell.live .fc-num { color: #10b981; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>UHS Enterprise Implementation — Weekly Dashboard</h1>
+    <div class="subtitle">TigerConnect · Program Status Overview</div>
+  </div>
+  <div class="date-badge">
+    <div style="font-weight:700;font-size:0.88rem;">Week of June 22, 2026</div>
+  </div>
+</header>
+
+<!-- Tab Bar -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="showTab('overview')">Summary</button>
+  <button class="tab-btn" onclick="showTab('weekly')">Weekly Status</button>
+  <button class="tab-btn" onclick="showTab('acute')">Acute Sites</button>
+  <button class="tab-btn" onclick="showTab('bh')">BH Sites</button>
+</div>
+
+<div id="tab-overview" class="tab-pane active">
+
+<!-- ===== 1. EXECUTIVE HEADER ===== -->
+<div class="section-label" style="margin-top:0;">Program Health — Week of June 22, 2026</div>
+<div class="exec-row">
+  <div class="status-card amber">
+    <div class="sc-label">Overall Program</div>
+    <div class="sc-status">🟡 Yellow</div>
+    <div class="sc-sub">Executing on plan; interface dependencies &amp; Wellington call quality keep it amber</div>
+  </div>
+  <div class="status-card amber">
+    <div class="sc-label">Acute Rollout</div>
+    <div class="sc-status">🟡 Yellow</div>
+    <div class="sc-sub">ABM Phase 2 (6/30) on track; Valley integration unknowns</div>
+  </div>
+  <div class="status-card amber">
+    <div class="sc-label">BH Rollout</div>
+    <div class="sc-status">🟡 Yellow</div>
+    <div class="sc-sub">Kickoff on both tracks (PE &amp; Core Platform) planned for week of 7/13; gated on Cerner/MS4 interfaces</div>
+  </div>
+  <div class="status-card green">
+    <div class="sc-label">Enterprise ADT</div>
+    <div class="sc-status">🟢 Green</div>
+    <div class="sc-sub">First Cerner for PE live (Turning Point, 6/23); MS4 / HRI next ~7/7</div>
+  </div>
+</div>
+
+<div class="kpi-row" style="grid-template-columns:repeat(5,1fr);margin-top:10px;">
+  <div class="kpi-card green">
+    <div class="kpi-label">Acute Sites Live</div>
+    <div class="kpi-value">2</div>
+    <div class="kpi-sub">WRM · ABM</div>
+  </div>
+  <div class="kpi-card blue">
+    <div class="kpi-label">Active Sites</div>
+    <div class="kpi-value">10</div>
+    <div class="kpi-sub">5 acute · 4 BH · 1 IPM (closing this week)</div>
+  </div>
+  <div class="kpi-card amber">
+    <div class="kpi-label">Open Risks</div>
+    <div class="kpi-value">7</div>
+    <div class="kpi-sub">1 red · 6 amber</div>
+  </div>
+  <div class="kpi-card red">
+    <div class="kpi-label">Open Escalations</div>
+    <div class="kpi-value">2</div>
+    <div class="kpi-sub">Wellington network · ABM adoption</div>
+  </div>
+  <div class="kpi-card purple">
+    <div class="kpi-label">Milestones Due This Week</div>
+    <div class="kpi-value">3</div>
+    <div class="kpi-sub">Cerner go-live at Turning Point · PE back-end update · Ascom discovery</div>
+  </div>
+</div>
+
+<!-- Quick Links -->
+<div class="section-label">Quick Links</div>
+<div class="card" style="border-left:4px solid #10b981;padding:12px 18px;">
+  <div style="font-size:0.8rem;color:#374151;">
+    📊 <a href="https://app.smartsheet.com/sheets/wfcff4cwpC74JjvV74PjcrP2XC2qp8v6pMhJC6c1" target="_blank" rel="noopener" style="color:#0f3460;font-weight:700;text-decoration:none;">UHS Facility Tracker</a>
+    <span style="color:#9ca3af;font-size:0.68rem;margin-left:8px;">Smartsheet · Acute &amp; BH facility list (source of truth)</span>
+  </div>
+</div>
+
+<!-- ===== 2. EXECUTIVE SUMMARY (Wins / Risks / Attention) ===== -->
+<div class="section-label">Executive Summary — Week of June 22, 2026</div>
+<div class="three-col">
+  <div class="card" style="border-top:3px solid #10b981;">
+    <h3 style="color:#065f46;">✅ Wins This Week</h3>
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:7px;font-size:0.72rem;color:#374151;line-height:1.4;">
+      <li>▸ <strong>Turning Point live on Cerner ADT (6/23)</strong> — program's first Cerner go-live for PE</li>
+      <li>▸ ABM Phase 1 stable; charge-nurse roles &amp; workflows built for floors 3/5/6</li>
+      <li>▸ BH PE — back-end updates automated with AI, with support from Jonesy &amp; Charles</li>
+      <li>▸ Workstream leads &amp; "Core Platform" terminology finalized</li>
+      <li>▸ Three Trails kicked off (opens Sept 22) — thanks to support from Michael Martinez</li>
+    </ul>
+  </div>
+  <div class="card" style="border-top:3px solid #f59e0b;">
+    <h3 style="color:#92400e;">⚠️ Risks</h3>
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:7px;font-size:0.72rem;color:#374151;line-height:1.4;">
+      <li>▸ <strong>Cerner &amp; MS4 ADT dependency</strong> — gates BH PE, St. Mary's &amp; Acute</li>
+      <li>▸ <strong>Wellington network call quality</strong> — WRM-specific, root cause open</li>
+      <li>▸ Provider adoption (ABM hospitalists)</li>
+      <li>▸ Valley — nurse call integration blocked; Ascom Telligence upgrade needed</li>
+      <li>▸ Resource coverage — Hélio, Tracy &amp; Paulo out</li>
+    </ul>
+  </div>
+  <div class="card" style="border-top:3px solid #ef4444;">
+    <h3 style="color:#991b1b;">🛑 Leadership Awareness</h3>
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:7px;font-size:0.72rem;color:#374151;line-height:1.4;">
+      <li>▸ <strong>Escalation:</strong> UHS networking to own Wellington call-quality root cause</li>
+      <li>▸ <strong>Decision:</strong> Valley Health integration with nurse call blocked by upgrade needed for Ascom Telligence system</li>
+      <li>▸ <strong>Resource support:</strong> coverage for ADT &amp; ABM Phase 2 testing during PTO</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ===== 3. PROGRAM HEALTH / TRENDS ===== -->
+<div class="section-label">Trends vs. Prior Week</div>
+<div class="kpi-row" style="grid-template-columns:repeat(5,1fr);">
+  <div class="kpi-card green">
+    <div class="kpi-label">Sites Live</div>
+    <div class="kpi-value">2 <span class="trend-flat" style="font-size:0.9rem;">→</span></div>
+    <div class="kpi-sub">WRM · ABM (acute)</div>
+  </div>
+  <div class="kpi-card amber">
+    <div class="kpi-label">Open Risks</div>
+    <div class="kpi-value">7 <span class="trend-flat" style="font-size:0.9rem;">→</span></div>
+    <div class="kpi-sub">Flat week over week</div>
+  </div>
+  <div class="kpi-card blue">
+    <div class="kpi-label">ABM Open Issues</div>
+    <div class="kpi-value">3 <span class="trend-down" style="font-size:0.9rem;">↓ −1</span></div>
+    <div class="kpi-sub">Closed iOS/Android parity</div>
+  </div>
+  <div class="kpi-card purple">
+    <div class="kpi-label">BH PE Orgs Activating</div>
+    <div class="kpi-value">10 <span class="trend-new" style="font-size:0.85rem;">▲ new</span></div>
+    <div class="kpi-sub">Wave 1 first cohort</div>
+  </div>
+  <div class="kpi-card red">
+    <div class="kpi-label">Open Escalations</div>
+    <div class="kpi-value">2 <span class="trend-flat" style="font-size:0.9rem;">→</span></div>
+    <div class="kpi-sub">Wellington · ABM adoption</div>
+  </div>
+</div>
+<div class="action-hint">Trends compare to the prior week; baselines fill in as more weeks accrue. Site counts reflect named facilities — see the Facility Tracker for full detail.</div>
+
+<!-- ===== 4. DELIVERY PORTFOLIO ===== -->
+<div class="section-label">Delivery Portfolio — PM Control Board</div>
+<div class="card">
+  <table class="proj-table">
+    <thead>
+      <tr><th>Workstream</th><th>TigerConnect</th><th>UHS</th><th>Status</th><th>Phase</th><th>Next Milestone</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Acute Rollout</strong></td>
+        <td style="font-size:0.68rem;">Vanessa Post</td>
+        <td style="font-size:0.68rem;">Jillian Mroz, Zaw Lin, Robert Henry</td>
+        <td><span class="dot amber"></span> <span style="font-size:0.68rem;">Yellow</span></td>
+        <td>Hypercare + Deployment</td>
+        <td style="font-size:0.68rem;">ABM Phase 2 — Jun 30</td>
+      </tr>
+      <tr style="background:#faf5ff;">
+        <td><strong>BH — PE Track</strong></td>
+        <td style="font-size:0.68rem;">Charles Ojoko, Jon Phang</td>
+        <td style="font-size:0.68rem;">Dave Kresge</td>
+        <td><span class="dot amber"></span> <span style="font-size:0.68rem;">Yellow</span></td>
+        <td>Planning</td>
+        <td style="font-size:0.68rem;">Wave kickoff mid-July</td>
+      </tr>
+      <tr style="background:#faf5ff;">
+        <td><strong>BH — Core Platform</strong></td>
+        <td style="font-size:0.68rem;">Michael Martinez, Omar Martinez</td>
+        <td style="font-size:0.68rem;">Robert Henry</td>
+        <td><span class="dot amber"></span> <span style="font-size:0.68rem;">Yellow</span></td>
+        <td>Planning</td>
+        <td style="font-size:0.68rem;">Wave kickoff mid-July</td>
+      </tr>
+      <tr>
+        <td><strong>Enterprise ADT</strong></td>
+        <td style="font-size:0.68rem;">Tracy Hall, Hélio Cardoso</td>
+        <td style="font-size:0.68rem;">Robert Henry</td>
+        <td><span class="dot green"></span> <span style="font-size:0.68rem;">Green</span></td>
+        <td>Deployment</td>
+        <td style="font-size:0.68rem;">MS4 / HRI go-live ~Jul 7</td>
+      </tr>
+      <tr style="opacity:0.6;">
+        <td><strong>IPM (NNMG)</strong></td>
+        <td style="font-size:0.68rem;">Charles Ojoko</td>
+        <td style="font-size:0.68rem;">Robert Henry</td>
+        <td><span class="dot" style="background:#9ca3af;"></span> <span style="font-size:0.68rem;">Closing</span></td>
+        <td>Close-out</td>
+        <td style="font-size:0.68rem;">Off the books — this week (out of scope)</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ===== 5. DEPENDENCY HEATMAP ===== -->
+<div class="section-label">Dependency Heatmap — Systemic Blockers</div>
+<div class="card">
+  <table class="proj-table">
+    <thead>
+      <tr><th>Dependency</th><th>Affects</th><th>Severity</th><th>Latest</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Cerner ADT interface</strong></td>
+        <td>BH PE · STM PE</td>
+        <td><span class="sev red">🔴 High</span></td>
+        <td style="font-size:0.68rem;color:#6b7280;">Turning Point live 6/23; St. Mary's starts ~Jul 20</td>
+      </tr>
+      <tr>
+        <td><strong>MS4 interface</strong></td>
+        <td>BH PE facilities (HRI first)</td>
+        <td><span class="sev red">🔴 High</span></td>
+        <td style="font-size:0.68rem;color:#6b7280;">HRI first MS4 go-live ~Jul 7</td>
+      </tr>
+      <tr>
+        <td><strong>AT&amp;T E911 order</strong></td>
+        <td>ABM Phase 2</td>
+        <td><span class="sev amber">🟡 Med</span></td>
+        <td style="font-size:0.68rem;color:#6b7280;">Escalated; awaiting AT&amp;T order completion</td>
+      </tr>
+      <tr>
+        <td><strong>UHS network / voice QoS</strong></td>
+        <td>Wellington call quality</td>
+        <td><span class="sev amber">🟡 Med</span></td>
+        <td style="font-size:0.68rem;color:#6b7280;">Report shared; UHS networking to root-cause</td>
+      </tr>
+      <tr>
+        <td><strong>Ascom Telligence upgrade</strong></td>
+        <td>Valley nurse call integration &amp; clinical kickoff</td>
+        <td><span class="sev red">🔴 High</span></td>
+        <td style="font-size:0.68rem;color:#6b7280;">Discovery 6/23: integration blocked — Ascom Telligence system upgrade required</td>
+      </tr>
+      <tr>
+        <td><strong>Team PTO coverage</strong></td>
+        <td>ADT build · ABM Phase 2 testing</td>
+        <td><span class="sev amber">🟡 Med</span></td>
+        <td style="font-size:0.68rem;color:#6b7280;">Hélio &amp; Tracy out ~2 wks; Paulo out (Ruben covering)</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+
+<div class="section-label">Workstream Leads — Updated June 25, 2026</div>
+<div class="three-col" style="grid-template-columns:repeat(4,1fr);">
+  <div class="card" style="border-top:3px solid #f59e0b;">
+    <h3>Acute Sites</h3>
+    <div style="font-size:0.72rem;color:#374151;line-height:1.6;">
+      <div><strong>TC Lead:</strong> Vanessa Post</div>
+      <div><strong>UHS Leads:</strong> Zaw Lin, Jillian Mroz, Robert Henry</div>
+      <div style="margin-top:6px;color:#6b7280;">5 active acute sites: Alan B. Miller Medical Center · St. Mary's Regional Medical Center · SWHC – Corona Regional Medical Center · SWHC – Inland Valley Hospital · VHS – Valley Hospital Medical Center</div>
+      <div style="margin-top:6px;"><span class="pill inflight">Leading all Acute workstreams</span></div>
+    </div>
+  </div>
+  <div class="card" style="border-top:3px solid #8b5cf6;">
+    <h3>BH PE Track</h3>
+    <div style="font-size:0.72rem;color:#374151;line-height:1.6;">
+      <div><strong>TC Leads:</strong> Charles Ojoko, Jon Phang</div>
+      <div><strong>UHS Lead:</strong> Dave Kresge</div>
+      <div style="margin-top:6px;color:#6b7280;">~173 existing TC BH facilities · PE module enablement · 6 waves</div>
+      <div style="margin-top:6px;"><span class="pill inflight">Wave kickoffs mid-July</span></div>
+    </div>
+  </div>
+  <div class="card" style="border-top:3px solid #3b82f6;">
+    <h3>BH Core Platform Track</h3>
+    <div style="font-size:0.72rem;color:#374151;line-height:1.6;">
+      <div><strong>TC Leads:</strong> Michael Martinez, Omar Martinez</div>
+      <div><strong>UHS Lead:</strong> Robert Henry</div>
+      <div style="margin-top:6px;color:#6b7280;">~51 net-new BH facilities · Core platform (full suite) · formerly "Full Deployment / MVP"</div>
+      <div style="margin-top:6px;"><span class="pill inflight">Three Trails kicked off 6/22 · opens Sept 22 · Wave kickoff mid-July</span></div>
+    </div>
+  </div>
+  <div class="card" style="border-top:3px solid #10b981;">
+    <h3>Enterprise ADT Track</h3>
+    <div style="font-size:0.72rem;color:#374151;line-height:1.6;">
+      <div><strong>PM:</strong> Tracy Hall</div>
+      <div><strong>Technical:</strong> Hélio Cardoso</div>
+      <div><strong>UHS Lead:</strong> Robert Henry</div>
+      <div style="margin-top:6px;color:#6b7280;">Enabling ADT for PE or PCM across UHS enterprise · Cerner &amp; MS4</div>
+      <div style="margin-top:6px;"><span class="pill live">Turning Point live 6/23 ✓ · MS4 / HRI ~7/7</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="three-col" style="margin-top:16px;">
+
+  <div class="card">
+    <h3>Risks &amp; Blockers</h3>
+    <div class="risk-row">
+      <div class="risk-icon">🔴</div>
+      <div>
+        <div class="risk-title">Wellington Call Quality — UHS Networking Investigation Required</div>
+        <div class="risk-detail">Kelsey sent the full report with Eduardo's findings to UHS networking (Zaw included). TC data confirms a real WRM-specific issue — UHS networking still leaning toward "network is fine," but the data shows otherwise. Confirmed with <strong>Jaime (Dir. of IT, ABM)</strong> on the engineers' call that ABM is <strong>not</strong> seeing widespread issues (no facility reports) — Pierre's earlier assumption that ABM had the same problem is not borne out. Daily resolution calls ongoing.</div>
+      </div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-icon">⚠️</div>
+      <div>
+        <div class="risk-title">Valley – Ascom Telligence Nurse Call &amp; Scheduling</div>
+        <div class="risk-detail"><strong>Integration blocked</strong> — discovery on 6/23 (Jonesy + Paulo) found the Ascom Telligence system needs an <strong>upgrade</strong> before TC nurse-call integration is possible. Clinical kickoff held until the upgrade path is resolved. Scheduling still an open risk — sourcing an MSO point of contact for a demo. All VHS sites to live in one TigerConnect org.</div>
+      </div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-icon">⚠️</div>
+      <div>
+        <div class="risk-title">Southwest Healthcare (Inland / Rancho) – Generic → Individual Accounts</div>
+        <div class="risk-detail">Roles &amp; Teams review held 6/23 (Ken with Alexine Rojas, SWHC informaticist / product owner). Moving generic → individually-provisioned accounts and expanding licensing to nurses. Interim step first, then SCIM/SAML migration (next year), then full Core Platform rollout. Inland, Rancho &amp; Corona are separate orgs (some overlap). UHS also deploying Zebra &amp; Imprivata.</div>
+      </div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-icon">⚠️</div>
+      <div>
+        <div class="risk-title">NWTX – Very Hard / High Risk (Q1 2027)</div>
+        <div class="risk-detail">Begin stakeholder alignment + change mgmt no later than Q3 2026. ABOUT transfer center impact on change management also flagged.</div>
+      </div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-icon">⚠️</div>
+      <div>
+        <div class="risk-title">ABM – Cerner FHIR Embed (Yellow)</div>
+        <div class="risk-detail">Deep-link "To" recipients not pre-populating. Not implemented due to configuration issues between Oracle ↔ TigerConnect ↔ UHS. Working through testing/config across vendors. Monitor for timeline impact.</div>
+      </div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-icon">⚠️</div>
+      <div>
+        <div class="risk-title">ABM – Battery Drain on Zebra &amp; Personal Phones (Yellow)</div>
+        <div class="risk-detail">TigerConnect app reported to drain batteries on both Zebra and personal phones. Likely tied to the PBX registration issue that was resolved. TC monitoring — not observed on site. Need to circle back.</div>
+      </div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-icon">⚠️</div>
+      <div>
+        <div class="risk-title">St. Mary's PE – Cerner ADT Start ~Jul 20</div>
+        <div class="risk-detail">Gated on Preet's other work — St. Mary's Cerner ADT for PE starts ~Jul 20. Charles has a call Thursday 6/26 to share the timeline; plan is to hold the site until September. Training expected to be a low lift, but full deployment + testing still required. PM: Charles.</div>
+      </div>
+    </div>
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid #f3f4f6;">
+      <div style="font-size:0.7rem;font-weight:700;color:#8b5cf6;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">BH Risks</div>
+      <div class="risk-row" style="padding-top:0;">
+        <div class="risk-icon">⚠️</div>
+        <div>
+          <div class="risk-title">BH Interface — Cerner and MS4</div>
+          <div class="risk-detail">Cerner and MS4 interface completion are key blockers for the BH PE and Core Platform tracks. First Cerner go-live (Turning Point) complete 6/23; first MS4 go-live (HRI) targets ~7/7.</div>
+        </div>
+      </div>
+      <div class="risk-row">
+        <div class="risk-icon">⚠️</div>
+        <div>
+          <div class="risk-title">BH — Engagement and Adoption from Stakeholders</div>
+          <div class="risk-detail">Stakeholder engagement and adoption is a risk across the BH program as rollout scales to 173+ facilities.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Decisions</h3>
+    <div class="risk-row">
+      <div class="risk-icon">📛</div>
+      <div>
+        <div class="risk-title">"MVP" → "Core Platform" / Core Products</div>
+        <div class="risk-detail">Terminology finalized this week: "MVP" (and interim "Full Deployment") are being replaced with <strong>Core Platform</strong> / core products — i.e. <strong>BH Core Platform</strong> and <strong>Acute Core Platform</strong>. Rationale (per UHS leadership): "MVP" implies facilities receive less than the full product. Vanessa updating the dashboard and all materials.</div>
+      </div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-icon">✅</div>
+      <div>
+        <div class="risk-title">BH Strategy — Dual Track (UHS Executive Steering Committee)</div>
+        <div class="risk-detail"><strong>PE-only track:</strong> ~173 existing TC BH facilities — Charles Ojoko &amp; Jon Phang (TC) with Dave Kresge (UHS). <strong>BH Core Platform track:</strong> ~51 net-new BH facilities — Michael Martinez &amp; Omar Martinez (TC) with Robert Henry (UHS). Both run in parallel Jun 2026 – Feb 2028.</div>
+      </div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-icon">🔌</div>
+      <div>
+        <div class="risk-title">Enterprise ADT — Reuse Existing West / Central / East Infrastructure</div>
+        <div class="risk-detail">Tracy Hall owns the enterprise ADT track (Cerner + MS4, acute + BH), with Hélio Cardoso on the technical build. MS4 is not region-specific (unlike Cerner) — team will still organize BH sites into West/Central/East using existing agents. Data-gathering step (3-digit MS4 facility codes mapped to region) required before each wave kickoff.</div>
+      </div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-icon">🗑️</div>
+      <div>
+        <div class="risk-title">✅ Turning Point — Cerner ADT Live (Jun 23)</div>
+        <div class="risk-detail">Complete. Existing PE patients were exported, the database wiped (Les ran the script), and the HL7 feed enabled — the program's first Cerner ADT go-live. No additional PE training needed (already using PE); awareness comms going to Turning Point staff that updates are made in Cerner/MS4, not Tiger. MS4's first go-live (HRI) targets ~Jul 7.</div>
+      </div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-icon">🆕</div>
+      <div>
+        <div class="risk-title">Three Trails — Opens Sept 22 · One-Off (Outside Wave Strategy)</div>
+        <div class="risk-detail">New BH hospital. Kicked off 6/22 (went well, team excited), bi-weekly cadence. Gets the BH Core Platform plus early messaging access since it's a new build. Not folded into the BH wave strategy — handled as a one-off. ~3 months runway to opening.</div>
+      </div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-icon">🚪</div>
+      <div>
+        <div class="risk-title">IPM (NNMG) — Out of Scope, Closing End of Month</div>
+        <div class="risk-detail">Independent Physician Medical Groups confirmed out of scope for the enterprise (Robert and team aligned). Corporate resource team is focusing on Acute and BH. NNMG being taken off the books this week.</div>
+      </div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-icon">🗓️</div>
+      <div>
+        <div class="risk-title">BH PE Wave Kickoffs Moved to Mid-July</div>
+        <div class="risk-detail">Wave kickoffs shifted to <strong>mid-July (week of 7/13)</strong> on both tracks due to vacations and planning. Back-end PE updates for the Wave 1 cohort are <strong>automated with AI</strong> (Charles + Jonesy); full wave rollout starts when David returns. Robert scheduled a BH Playbooks &amp; Waves review for 6/30.</div>
+      </div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-icon">📅</div>
+      <div>
+        <div class="risk-title">ABM ED Schedule — Hold Off Until Next Steps Identified</div>
+        <div class="risk-detail">No action needed yet. Vanessa identified Talitha as potential lead. Team should be able to create schedules and add users independently. Avoid one-off changes — consolidate requests first.</div>
+      </div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-icon">📊</div>
+      <div>
+        <div class="risk-title">Dashboard — Iterate &amp; Gather Team Feedback</div>
+        <div class="risk-detail">Vanessa shared the new weekly dashboard in the UHS General Teams shared folder. Plans to iterate over the next few weeks. Roberto to receive dashboard for resource awareness.</div>
+      </div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-icon">🏥</div>
+      <div>
+        <div class="risk-title">PE — Clear Patients &amp; Repopulate from HL7 Server</div>
+        <div class="risk-detail">Updating MRNs for existing patients in Tiger is not currently supported. Decision: clear all PE patients and restart from HL7 server. Identified as a <strong>major project roadblock</strong> — engineering input required.</div>
+      </div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-icon">📞</div>
+      <div>
+        <div class="risk-title">Wellington — Manually Clean PBX Extensions &amp; Provide Corrected Report</div>
+        <div class="risk-detail">Chris found 6 duplicate PBX extensions in search API (affecting 12 people). Admin console correct; search API incorrect. Eduardo &amp; Sourabh have details. Manual cleanup needed before sending updated dial lists.</div>
+      </div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-icon">🏗️</div>
+      <div>
+        <div class="risk-title">Next Acute Core Platform Sites — Valley, then Inland/Rancho &amp; Corona</div>
+        <div class="risk-detail">Valley is the next acute Core Platform deployment (Ascom &amp; scheduling discovery underway). Inland &amp; Rancho full rollout next year; Corona separate (mixed nurse call). St. Mary's PE gated on Cerner ADT (~Jul 20).<br><br>📋 <strong>Note (SWHC):</strong> Denise confirmed scheduling already installed for Southwest Healthcare.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Follow-Up Action Items — June 22</h3>
+    <div class="action-hint">✓ Check the box to mark an item done (strikes it through). Click an owner to edit.</div>
+    <table class="action-table">
+      <thead><tr><th>Done</th><th>Action</th><th>Owner</th></tr></thead>
+      <tbody>
+        <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>PE Org Activation (First 10)</strong> — Run the quick session to activate the initial 10 BH orgs via script this week</td><td class="action-owner" contenteditable="true">Charles, Jonesy</td></tr>
+        <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>BH Playbooks &amp; Waves Review</strong> — Attend Robert's 6/30 session; confirm facilities in each wave</td><td class="action-owner" contenteditable="true">Vanessa, Charles, Michael, Omar</td></tr>
+        <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>Wave Kickoff Scheduling</strong> — Set mid-July kickoff dates; full wave rollout begins when David returns</td><td class="action-owner" contenteditable="true">David Kresge, Vanessa</td></tr>
+        <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>MS4 / HRI Go-Live Prep</strong> — Confirm HRI Hospital MS4 go-live (~Jul 7); first MS4 site</td><td class="action-owner" contenteditable="true">Robert, Hélio</td></tr>
+        <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>MS4 Facility Codes</strong> — Beth's team (Katie) to confirm 3-digit facility IDs against MS4 in the tracker</td><td class="action-owner" contenteditable="true">Beth, Jillian</td></tr>
+        <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>Turning Point Awareness Comms</strong> — Confirm staff know to make changes in Cerner/MS4, not Tiger</td><td class="action-owner" contenteditable="true">Michael, Robert</td></tr>
+        <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>St. Mary's PE Timeline</strong> — 6/26 call to share ~Jul 20 start; hold site to September</td><td class="action-owner" contenteditable="true">Charles</td></tr>
+        <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>NNMG / IPM Close-Out</strong> — Confirm NNMG completes tasks; take off the books this week (out of scope)</td><td class="action-owner" contenteditable="true">Charles, Robert</td></tr>
+        <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>Valley Ascom Upgrade Path</strong> — Integration blocked; scope the Ascom Telligence upgrade needed before nurse-call integration</td><td class="action-owner" contenteditable="true">Jonesy, Paulo, Zaw</td></tr>
+        <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>Valley Scheduling POC</strong> — Source an MSO point of contact for a scheduling demo</td><td class="action-owner" contenteditable="true">Vanessa, Jillian</td></tr>
+        <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>ABM Phase 2 Testing</strong> — Test charge-nurse roles/workflows on floors 3/5/6 before Jun 30 (Paulo out — Ruben covering)</td><td class="action-owner" contenteditable="true">Ken, Mai Lein</td></tr>
+        <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>Wellington Call Quality</strong> — Ensure Zaw received Kelsey's full report; push UHS networking on root cause</td><td class="action-owner" contenteditable="true">Kelsey, Zaw, Eduardo</td></tr>
+        <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>PTO Coverage</strong> — Paulo→Ruben handoff (out from 6/26); cover Hélio &amp; Tracy (out ~2 weeks)</td><td class="action-owner" contenteditable="true">Vanessa, Paulo</td></tr>
+        <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>Update "MVP" → "Core Platform"</strong> — Finish replacing MVP / Full Deployment language across all materials</td><td class="action-owner" contenteditable="true">Vanessa</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- end tab-overview -->
+
+<!-- ACUTE SITES TAB -->
+<div id="tab-acute" class="tab-pane">
+
+<div class="section-label">Acute Sites Lead</div>
+<div class="card" style="border-top:3px solid #f59e0b;margin-bottom:14px;">
+  <h3>Acute Sites</h3>
+  <div style="font-size:0.72rem;color:#374151;line-height:1.6;">
+    <div><strong>Program Lead:</strong> Vanessa Post</div>
+    <div style="margin-top:6px;color:#6b7280;">8 active acute sites · ABM live · Wellington, SWHC (Inland / Rancho / Corona), Valley, McAllen, NWTX</div>
+    <div style="margin-top:6px;"><span class="pill inflight">Leading all Acute workstreams</span></div>
+  </div>
+</div>
+
+<div class="section-label">Active Projects — Acute Sites</div>
+<div class="card">
+  <h3>Acute Sites · 5 Active + Pipeline</h3>
+  <table class="proj-table">
+    <thead>
+      <tr>
+        <th>Site</th>
+        <th>Go-Live</th>
+        <th>ADT/EMR</th>
+        <th>Nurse Call</th>
+        <th>PBX</th>
+        <th>Status</th>
+        <th>Resources</th>
+        <th>Next Steps</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="background:#f0fdf4;">
+        <td><strong>Alan B. Miller (ABM)</strong></td>
+        <td><strong style="color:#10b981;">May 19 ✓</strong></td>
+        <td>Cerner</td>
+        <td>Hillrom</td>
+        <td>Cisco</td>
+        <td><span class="pill live">Live</span></td>
+        <td style="font-size:0.65rem;color:#6b7280;">Ken, Paulo, Jonesy, Kelsey, Cary, Denise</td>
+        <td style="font-size:0.65rem;color:#6b7280;"><strong>Phase 1 live (May 19).</strong> Charge-nurse roles &amp; workflows built for 3rd/5th/6th floors (Paulo confirmed) — unit testing still needed with Mai Lein. <strong>Phase 2 go-live Jun 30; Phase 3 Aug 17.</strong> Coverage note: Paulo out from 6/26 (Ruben covering). E911 escalated with AT&amp;T. Cerner FHIR embed not yet implemented. Wellington-style call quality issues confirmed <strong>not</strong> present at ABM (per Jaime, Dir. of IT). Discern via SMTP in scope: CapMan, Discharge, AOT, OB, Sepsis.</td>
+      </tr>
+      <tr>
+        <td><strong>St. Mary's (STM)</strong></td>
+        <td>TBD</td>
+        <td>Cerner</td>
+        <td>Rauland R5</td>
+        <td>Avaya</td>
+        <td><span class="pill inflight">In Progress</span></td>
+        <td style="font-size:0.65rem;color:#6b7280;">Charles</td>
+        <td style="font-size:0.65rem;color:#6b7280;">Cerner ADT for PE starts ~Jul 20 (gated on Preet's other work). Charles call 6/26 to share timeline; site held to September. Training expected low lift; full deployment + testing still required.</td>
+      </tr>
+      <tr>
+        <td><strong>SWHC – Inland Valley</strong></td>
+        <td>TBD (Core)</td>
+        <td>Cerner</td>
+        <td>Ascom Telligence</td>
+        <td>Avaya</td>
+        <td><span class="pill inflight">In Progress</span></td>
+        <td style="font-size:0.65rem;color:#6b7280;">Jonesy, Ken Brown</td>
+        <td style="font-size:0.65rem;color:#6b7280;"><strong>Roles &amp; Teams review held Jun 23</strong> (Ken with Alexine Rojas, SWHC informaticist). This round: move generic → individual accounts (incl. nursing) and update Roles &amp; Teams. Interim step first, then SCIM/SAML migration (next year), then full Core Platform rollout. Jonesy primary resource. UHS also deploying Zebra &amp; Imprivata. Inland + Rancho together; Corona separate.</td>
+      </tr>
+      <tr>
+        <td><strong>SWHC – Rancho Springs</strong></td>
+        <td>TBD (Core)</td>
+        <td>Cerner</td>
+        <td>Ascom Telligence</td>
+        <td>Avaya → Cisco Q4</td>
+        <td><span class="pill inflight">In Progress</span></td>
+        <td style="font-size:0.65rem;color:#6b7280;">Jonesy, Ken Brown</td>
+        <td style="font-size:0.65rem;color:#6b7280;"><strong>Roles &amp; Teams review held Jun 23</strong> (Ken with Alexine Rojas, SWHC informaticist). This round: move generic → individual accounts (incl. nursing) and update Roles &amp; Teams. Interim step first, then SCIM/SAML migration (next year), then full Core Platform rollout. Jonesy primary resource. UHS also deploying Zebra &amp; Imprivata. Inland + Rancho together; Corona separate.</td>
+      </tr>
+      <tr>
+        <td><strong>VHS – Valley Hospital</strong></td>
+        <td>Q4 2026</td>
+        <td>Cerner</td>
+        <td style="color:#f59e0b;font-weight:600;">Ascom Telligence (Ideacom) ⚠️</td>
+        <td>Avaya</td>
+        <td><span class="pill inflight">Started</span></td>
+        <td style="font-size:0.65rem;color:#6b7280;">Ken, Paulo, Jonesy, Helio, Denise</td>
+        <td style="font-size:0.65rem;color:#6b7280;">Next acute Core Platform (Las Vegas market). <strong>Nurse-call integration blocked</strong> — 6/23 discovery (Jonesy + Paulo) found the Ascom Telligence system needs an upgrade before TC can integrate. All VHS sites to live in one TigerConnect org. Scheduling demo pending — sourcing an MSO POC. Clinical kickoff held until the upgrade path is resolved.</td>
+      </tr>
+      <tr>
+        <td><strong>SWHC – Corona Regional</strong></td>
+        <td>Q1 2027</td>
+        <td>Cerner</td>
+        <td>Rauland R5 / Hillrom mix</td>
+        <td>Avaya → Cisco Q4</td>
+        <td><span class="pill notstarted">Not Started</span></td>
+        <td style="font-size:0.65rem;color:#6b7280;">—</td>
+        <td style="font-size:0.65rem;color:#6b7280;">Core Platform starting Q3 2026; go-live Q1 2027. Mixed nurse call confirmed (Hillrom + Rauland, unit-by-unit) — added complexity; Rauland reseller discovery needed. Separate org from Inland/Rancho.</td>
+      </tr>
+      <tr>
+        <td><strong>STHS – McAllen Heart</strong></td>
+        <td>Q4 2026</td>
+        <td>Cerner</td>
+        <td>Hillrom</td>
+        <td>Avaya</td>
+        <td><span class="pill notstarted">Not Started</span></td>
+        <td style="font-size:0.65rem;color:#6b7280;">—</td>
+        <td style="font-size:0.65rem;color:#6b7280;">Current CareAware Connect. Stakeholder alignment needed Q3 2026.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ABM Hypercare -->
+<div class="section-label">ABM Hypercare — Go Live Issue Tracker (May 19, 2026) &nbsp;·&nbsp; Updated: Jun 22 PM Sync &amp; Internal Sync</div>
+<div class="two-col">
+
+  <div class="card">
+    <h3>🔴 Open &amp; In-Progress Issues (3)</h3>
+    <table class="proj-table">
+      <thead>
+        <tr><th>#</th><th>Issue</th><th>Type</th><th>Severity</th><th>Status</th><th>Owner</th><th>Latest Note</th></tr>
+      </thead>
+      <tbody>
+        <tr style="background:#fff7ed;">
+          <td>7</td>
+          <td><strong>Provider Training &amp; TC Buy-In</strong></td>
+          <td style="font-size:0.65rem;">Training</td>
+          <td><span class="pill high">High</span></td>
+          <td><span class="pill inflight">In Progress</span></td>
+          <td>Vanessa Post</td>
+          <td style="font-size:0.65rem;color:#ef4444;">Hospitalists refusing to download TC. Leadership escalation recommended. Track physician adoption at next go live.</td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td><strong>Deep Link Patient Context Error</strong></td>
+          <td style="font-size:0.65rem;">Technical</td>
+          <td><span class="pill low">Low</span></td>
+          <td><span class="pill inflight">In Progress</span></td>
+          <td>Brendan Del Rosario</td>
+          <td style="font-size:0.65rem;color:#6b7280;">5/22: Narrowed to one patient — other patients functioning correctly.</td>
+        </tr>
+        <tr>
+          <td>13</td>
+          <td><strong>Add Zaw to TestFlight Releases</strong></td>
+          <td style="font-size:0.65rem;">Enhancement</td>
+          <td><span class="pill" style="background:#f3f4f6;color:#6b7280;">—</span></td>
+          <td><span class="pill notstarted">Open</span></td>
+          <td>—</td>
+          <td style="font-size:0.65rem;color:#6b7280;">Enhancement request from Zaw Lin.</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top:10px;font-size:0.68rem;color:#6b7280;">
+      ✅ <strong>Closed (10):</strong> App crash (APK updated, monitoring) · Override Silent Mode (released) · Code Blue alerts · Code Blue audio · Corporate users not provisioned · Discharged patient in list · Name change · Name incorrect · SAML error · Status Indicator · Dark Mode · Training Follow-Up
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Gantt — 2026 Acute Timeline</h3>
+    <div style="display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap;">
+      <span style="display:flex;align-items:center;gap:4px;font-size:0.65rem;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#10b981;"></span>Wave 1</span>
+      <span style="display:flex;align-items:center;gap:4px;font-size:0.65rem;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#3b82f6;"></span>Wave 2</span>
+      <span style="display:flex;align-items:center;gap:4px;font-size:0.65rem;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#8b5cf6;"></span>Wave 3</span>
+      <span style="display:flex;align-items:center;gap:4px;font-size:0.65rem;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fca5a5;"></span>Blocked</span>
+    </div>
+    <div style="font-size:0.6rem;color:#9ca3af;display:flex;justify-content:space-between;margin-bottom:4px;padding-left:108px;">
+      <span>Q1</span><span>Q2</span><span>Q3</span><span>Q4</span><span>Q1'27</span>
+    </div>
+    <div id="gantt-rows"></div>
+    <script>
+      const sites = [
+        { name:"1. ABM",            left:3.3,  width:27.4, cls:"bar-w1", label:"ABM ✓ Phase 1 Live — Ph2 Jun 30 · Ph3 Aug 17" },
+        { name:"3a. Inland Valley", left:42.3, width:12,   cls:"bar-w1", label:"Inland (Role Optimization)" },
+        { name:"3b. Rancho Springs",left:42.3, width:12,   cls:"bar-w1", label:"Rancho (Role Optimization)" },
+        { name:"5. PE–St.Mary's",   left:42.3, width:26.9, cls:"bar-w1", label:"St. Mary's PE" },
+        { name:"8. ADT W/C",        left:42.3, width:19.2, cls:"bar-w1", label:"ADT" },
+        { name:"9. Imprivata",      left:44.2, width:19.2, cls:"bar-w1", label:"Imprivata" },
+        { name:"10. Skybox→WS",     left:44.2, width:23.1, cls:"bar-w1", label:"Skybox" },
+        { name:"2. Valley",         left:42.3, width:34.6, cls:"bar-w2", label:"Valley" },
+        { name:"7. STHS McAllen",   left:51.9, width:26.9, cls:"bar-w2", label:"STHS" },
+        { name:"4. Corona Reg.",    left:75,   width:25,   cls:"bar-w3", label:"Corona" },
+        { name:"3a. Inland Core",   left:75,   width:25,   cls:"bar-w3", label:"Inland Core Platform" },
+        { name:"3b. Rancho Core",   left:75,   width:25,   cls:"bar-w3", label:"Rancho Core Platform" },
+        { name:"6. NWTX",           left:75,   width:25,   cls:"bar-w3", label:"NWTX" },
+      ];
+      const wrap = document.getElementById('gantt-rows');
+      sites.forEach(s => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;margin-bottom:4px;';
+        row.innerHTML = `
+          <div style="width:108px;font-size:0.65rem;color:#374151;flex-shrink:0;padding-right:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.name}</div>
+          <div style="flex:1;background:#f3f4f6;border-radius:3px;height:18px;position:relative;">
+            <div class="gantt-bar ${s.cls}" style="left:${s.left}%;width:${Math.max(s.width,3)}%;">${s.label}</div>
+          </div>`;
+        wrap.appendChild(row);
+      });
+    </script>
+  </div>
+
+</div>
+
+<!-- Rollout Waves -->
+<div class="section-label">Acute Rollout Waves — All 10 Pipeline Sites</div>
+<div class="two-col">
+  <div class="card">
+    <h3>Wave Breakdown — Sites &amp; Workstreams</h3>
+    <table class="tracker-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Site</th>
+          <th>Wave</th>
+          <th>Target</th>
+          <th>Status</th>
+          <th>Risk</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td><td><strong>Alan B. Miller</strong></td>
+          <td><span class="wave-badge" style="background:#10b981;">W1</span></td>
+          <td>Q1 2026</td>
+          <td><span class="pill live">Live ✓</span></td>
+          <td><span class="pill low">Low</span></td>
+        </tr>
+        <tr>
+          <td style="font-size:0.65rem;color:#6b7280;" colspan="6">⚠️ <em>Phase 1 live May 19. Nurse call testing underway w/ Mai Lein. <strong>Phase 2 go-live Jun 30; Phase 3 Aug 17.</strong> E911 escalated with AT&amp;T.</em></td>
+        </tr>
+        <tr>
+          <td>3a</td><td><strong>Inland Valley Hospital</strong></td>
+          <td><span class="wave-badge" style="background:#10b981;">W1</span></td>
+          <td>TBD (Core)</td>
+          <td><span class="pill inflight">In Progress</span></td>
+          <td><span class="pill medium">Med</span></td>
+        </tr>
+        <tr>
+          <td>3b</td><td><strong>Rancho Springs Hospital</strong></td>
+          <td><span class="wave-badge" style="background:#10b981;">W1</span></td>
+          <td>TBD (Core)</td>
+          <td><span class="pill inflight">In Progress</span></td>
+          <td><span class="pill medium">Med</span></td>
+        </tr>
+        <tr>
+          <td>5</td><td><strong>PE – St. Mary's</strong></td>
+          <td><span class="wave-badge" style="background:#10b981;">W1</span></td>
+          <td>Q3 2026</td>
+          <td><span class="pill inflight">In Progress</span></td>
+          <td><span class="pill low">Low</span></td>
+        </tr>
+        <tr>
+          <td style="font-size:0.65rem;color:#10b981;" colspan="6">✅ <em>Consent form resolved — PE expansion unblocked. PE patient deletion required before HL7 feed enabled. PM: Charles.</em></td>
+        </tr>
+        <tr>
+          <td>8</td><td><strong>ADT – West &amp; Central</strong></td>
+          <td><span class="wave-badge" style="background:#10b981;">W1</span></td>
+          <td>Q3 2026</td>
+          <td><span class="pill notstarted">Not Started</span></td>
+          <td><span class="pill low">Low</span></td>
+        </tr>
+        <tr>
+          <td>9</td><td><strong>Imprivata Upgrade</strong></td>
+          <td><span class="wave-badge" style="background:#10b981;">W1</span></td>
+          <td>Q3 2026</td>
+          <td><span class="pill notstarted">Not Started</span></td>
+          <td><span class="pill low">Low</span></td>
+        </tr>
+        <tr>
+          <td style="font-size:0.65rem;color:#6b7280;" colspan="6">⚠️ <em>Primarily UHS work effort. TC should monitor for any integration impacts to current Imprivata integration.</em></td>
+        </tr>
+        <tr>
+          <td>10</td><td><strong>Skybox → Workspace (MDM)</strong></td>
+          <td><span class="wave-badge" style="background:#10b981;">W1</span></td>
+          <td>Q3 2026</td>
+          <td><span class="pill notstarted">Not Started</span></td>
+          <td><span class="pill low">Low</span></td>
+        </tr>
+        <tr>
+          <td style="font-size:0.65rem;color:#6b7280;" colspan="6">⚠️ <em>Primarily UHS work effort — transitioning to a new MDM. TC to monitor for any impacts to current integration.</em></td>
+        </tr>
+        <tr style="background:#eff6ff;">
+          <td>2</td><td><strong>Valley Hospital</strong></td>
+          <td><span class="wave-badge" style="background:#3b82f6;">W2</span></td>
+          <td>Q4 2026</td>
+          <td><span class="pill inflight">In Progress</span></td>
+          <td><span class="pill high">High</span></td>
+        </tr>
+        <tr style="background:#eff6ff;">
+          <td style="font-size:0.65rem;color:#6b7280;" colspan="6">⚠️ <em>Technical discovery underway. Scheduling via ABOUT (not TC). Ascom Telligence nurse call — local vendor Ideacom to be engaged. Clinical kickoff TBD pending discovery findings.</em></td>
+        </tr>
+        <tr style="background:#eff6ff;">
+          <td>7</td><td><strong>STHS McAllen</strong></td>
+          <td><span class="wave-badge" style="background:#3b82f6;">W2</span></td>
+          <td>Q4 2026</td>
+          <td><span class="pill notstarted">Not Started</span></td>
+          <td><span class="pill high">High</span></td>
+        </tr>
+        <tr style="background:#faf5ff;">
+          <td>4</td><td><strong>Corona Regional</strong></td>
+          <td><span class="wave-badge" style="background:#8b5cf6;">W3</span></td>
+          <td>Q1 2027</td>
+          <td><span class="pill notstarted">Not Started</span></td>
+          <td><span class="pill low">Low</span></td>
+        </tr>
+        <tr style="background:#faf5ff;">
+          <td>6</td><td><strong>NWTX</strong></td>
+          <td><span class="wave-badge" style="background:#8b5cf6;">W3</span></td>
+          <td>Q1 2027</td>
+          <td><span class="pill notstarted">Not Started</span></td>
+          <td><span class="pill high">High</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  </div>
+
+<div class="section-label" style="margin-top:20px;">Risks &amp; Blockers</div>
+<div class="card">
+  <div class="risk-row">
+    <div class="risk-icon">⚠️</div>
+    <div>
+      <div class="risk-title">Valley – Ascom Telligence Nurse Call (Blocked)</div>
+      <div class="risk-detail"><strong>Integration blocked</strong> — 6/23 discovery found the Ascom Telligence system needs an upgrade before TC nurse-call integration is possible. Phase 1 messaging/Roles &amp; Teams can proceed; scheduling via ABOUT (not TC). Clinical kickoff held until upgrade path resolved.</div>
+    </div>
+  </div>
+  <div class="risk-row">
+    <div class="risk-icon">⚠️</div>
+    <div>
+      <div class="risk-title">Southwest Healthcare (Inland / Rancho) – Generic → Individual Accounts</div>
+      <div class="risk-detail">Roles &amp; Teams review held Jun 23 (Ken with Alexine Rojas). Moving generic → individual accounts and adding nurse licensing. Interim step, then SCIM/SAML (next year), then full Core Platform. Jonesy primary resource. UHS also deploying Zebra &amp; Imprivata.</div>
+    </div>
+  </div>
+  <div class="risk-row">
+    <div class="risk-icon">⚠️</div>
+    <div>
+      <div class="risk-title">NWTX – Very Hard / High Risk (Q1 2027)</div>
+      <div class="risk-detail">Begin stakeholder alignment + change mgmt no later than Q3 2026. ABOUT transfer center impact on change management also flagged.</div>
+    </div>
+  </div>
+  <div class="risk-row">
+    <div class="risk-icon">⚠️</div>
+    <div>
+      <div class="risk-title">Wellington Call Quality — UHS Networking Investigation</div>
+      <div class="risk-detail">Kelsey's full report (Eduardo's findings) shared with UHS networking (Zaw included). TC data confirms a real WRM-specific issue. ABM confirmed clean (per Jaime, Dir. of IT). Daily resolution calls ongoing; UHS networking to root-cause.</div>
+    </div>
+  </div>
+  <div class="risk-row">
+    <div class="risk-icon">⚠️</div>
+    <div>
+      <div class="risk-title">ABM – Cerner Embed</div>
+      <div class="risk-detail">Embed work remaining post go-live. UHS submitting Change Request. Monitor for timeline impact.</div>
+    </div>
+  </div>
+  <div class="risk-row">
+    <div class="risk-icon">✅</div>
+    <div>
+      <div class="risk-title">St. Mary's PE – Cerner ADT Start ~Jul 20</div>
+      <div class="risk-detail">Gated on Preet's other work; PE Cerner ADT starts ~Jul 20. Charles call 6/26 to share timeline; site held to September. Training low lift; full deployment + testing still required. PM: Charles.</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end tab-acute -->
+
+<!-- BH SITES TAB -->
+<div id="tab-bh" class="tab-pane">
+
+<!-- ===== 6. BH COMMAND CENTER ===== -->
+<div class="section-label" style="margin-top:0;">BH Command Center — Week of June 22, 2026</div>
+<div class="two-col" style="margin-bottom:14px;">
+
+  <div class="card" style="border-top:3px solid #8b5cf6;">
+    <h3>BH PE Track — 173 Existing Facilities</h3>
+    <div style="font-size:0.66rem;color:#6b7280;">Charles Ojoko &amp; Jon Phang · Dave Kresge (UHS) · PE module enablement, 6 waves</div>
+    <div class="funnel-row">
+      <div class="funnel-cell total"><div class="fc-num">173</div><div class="fc-lab">Total</div></div>
+      <div class="funnel-cell"><div class="fc-num">163</div><div class="fc-lab">Planning</div></div>
+      <div class="funnel-cell"><div class="fc-num">0</div><div class="fc-lab">Discovery</div></div>
+      <div class="funnel-cell"><div class="fc-num">10</div><div class="fc-lab">Build</div></div>
+      <div class="funnel-cell live"><div class="fc-num">0</div><div class="fc-lab">Live</div></div>
+    </div>
+    <div style="margin-top:8px;font-size:0.66rem;color:#374151;">Wave 1 cohort · back-end PE updates automated (AI-assisted, Charles &amp; Jonesy) · wave kickoffs mid-July</div>
+  </div>
+
+  <div class="card" style="border-top:3px solid #3b82f6;">
+    <h3>Core Platform Track — 51 New Facilities</h3>
+    <div style="font-size:0.66rem;color:#6b7280;">Michael &amp; Omar Martinez · Robert Henry (UHS) · full suite, net-new TC orgs</div>
+    <div class="funnel-row">
+      <div class="funnel-cell total"><div class="fc-num">51</div><div class="fc-lab">Total</div></div>
+      <div class="funnel-cell"><div class="fc-num">50</div><div class="fc-lab">Planning</div></div>
+      <div class="funnel-cell"><div class="fc-num">0</div><div class="fc-lab">Discovery</div></div>
+      <div class="funnel-cell"><div class="fc-num">1</div><div class="fc-lab">Build</div></div>
+      <div class="funnel-cell live"><div class="fc-num">0</div><div class="fc-lab">Live</div></div>
+    </div>
+    <div style="margin-top:8px;font-size:0.66rem;color:#374151;">Three Trails in build — kicked off 6/22, opens Sept 22 (one-off)</div>
+  </div>
+
+</div>
+
+<div class="card" style="border-left:4px solid #10b981;padding:10px 16px;margin-bottom:14px;">
+  <div style="font-size:0.72rem;color:#374151;">
+    <strong>Enterprise ADT:</strong> <span class="pill live">Turning Point live 6/23 ✓</span> (Cerner — first go-live) &nbsp;·&nbsp; next: <strong>HRI Hospital</strong> (MS4) ~Jul 7 &nbsp;·&nbsp; Tracy Hall &amp; Hélio Cardoso
+    <span style="color:#9ca3af;font-size:0.64rem;display:block;margin-top:4px;">Stage splits above are approximate (everything not yet started = Planning) — see the <a href="https://app.smartsheet.com/sheets/wfcff4cwpC74JjvV74PjcrP2XC2qp8v6pMhJC6c1" target="_blank" rel="noopener" style="color:#0f3460;">UHS Facility Tracker</a> for live counts.</span>
+  </div>
+</div>
+
+<div class="section-label">BH Workstream Leads — Updated June 22, 2026</div>
+<div class="two-col" style="margin-bottom:14px;">
+  <div class="card" style="border-top:3px solid #8b5cf6;">
+    <h3>BH PE Track</h3>
+    <div style="font-size:0.72rem;color:#374151;line-height:1.6;">
+      <div><strong>TC Leads:</strong> Charles Ojoko, Jon Phang</div>
+      <div><strong>UHS Lead:</strong> Dave Kresge</div>
+      <div style="margin-top:6px;color:#6b7280;">~173 existing TC BH facilities · PE module enablement · 6 waves</div>
+      <div style="margin-top:6px;"><span class="pill inflight">Wave kickoffs mid-July</span></div>
+    </div>
+  </div>
+  <div class="card" style="border-top:3px solid #3b82f6;">
+    <h3>BH Core Platform Track</h3>
+    <div style="font-size:0.72rem;color:#374151;line-height:1.6;">
+      <div><strong>TC Leads:</strong> Michael Martinez, Omar Martinez</div>
+      <div><strong>UHS Lead:</strong> Robert Henry</div>
+      <div style="margin-top:6px;color:#6b7280;">~51 net-new BH facilities · Core platform (full suite) · formerly "Full Deployment / MVP"</div>
+      <div style="margin-top:6px;"><span class="pill inflight">Three Trails kicked off 6/22 · opens Sept 22 · Wave kickoff mid-July</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="section-label">Active Projects — Behavioral Health Sites</div>
+<div class="card">
+  <h3>BH Sites · Turning Point Live · IPM Closing</h3>
+  <table class="proj-table">
+    <thead>
+      <tr>
+        <th>Site</th>
+        <th>Go-Live</th>
+        <th>ADT/EMR</th>
+        <th>Status</th>
+        <th>Resources</th>
+        <th>Next Steps</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="background:#f0fdf4;">
+        <td><strong>Turning Point Hospital</strong></td>
+        <td><strong style="color:#10b981;">Jun 23 ✓</strong></td>
+        <td>Cerner</td>
+        <td><span class="pill live">Live</span></td>
+        <td style="font-size:0.65rem;color:#6b7280;">Charles, Hélio, Michael M.</td>
+        <td style="font-size:0.65rem;color:#6b7280;"><strong>Live on Cerner ADT (Jun 23)</strong> — program's first Cerner go-live. Patients exported, DB wiped (Les), HL7 feed enabled. No extra PE training (already using PE). Awareness comms: make changes in Cerner/MS4, not Tiger.</td>
+      </tr>
+      <tr style="background:#faf5ff;">
+        <td><strong>Arbour – HRI</strong></td>
+        <td>TBD</td>
+        <td>MS4</td>
+        <td><span class="pill inflight">In Progress</span></td>
+        <td style="font-size:0.65rem;color:#6b7280;">Michael M., Helio</td>
+        <td style="font-size:0.65rem;color:#f59e0b;">CCP live w/ AD. Set go-live date for Messenger.</td>
+      </tr>
+      <tr style="background:#faf5ff;">
+        <td><strong>Arbour Hospital</strong></td>
+        <td>TBD</td>
+        <td>MS4</td>
+        <td><span class="pill inflight">In Progress</span></td>
+        <td style="font-size:0.65rem;color:#6b7280;">Michael M., Helio</td>
+        <td style="font-size:0.65rem;color:#6b7280;">Messenger live. MS4 ADT integration ongoing.</td>
+      </tr>
+      <tr style="background:#faf5ff;">
+        <td><strong>Three Trails Behavioral</strong></td>
+        <td><strong>Sep 22, 2026</strong></td>
+        <td>—</td>
+        <td><span class="pill inflight">Started</span></td>
+        <td style="font-size:0.65rem;color:#6b7280;">Michael Martinez, Omar Martinez, Hélio</td>
+        <td style="font-size:0.65rem;color:#6b7280;">BH Core Platform (new hospital, opens Sept 22). Kicked off June 22 — went well, team excited. Bi-weekly cadence; ~3 months runway. One-off (outside the BH wave strategy); gets early messaging access.</td>
+      </tr>
+      <tr style="opacity:0.7;">
+        <td><strong>NNMG – Northern Nevada Medical Group</strong> <span class="pill" style="background:#fee2e2;color:#991b1b;">IPM</span></td>
+        <td>—</td>
+        <td>N/A</td>
+        <td><span class="pill notstarted">Closing</span></td>
+        <td style="font-size:0.65rem;color:#6b7280;">Charles, Robert</td>
+        <td style="font-size:0.65rem;color:#6b7280;"><strong>Out of scope — closing this week.</strong> IPM (independent physician medical groups) confirmed not in enterprise scope; corporate team focusing on Acute &amp; BH. Confirming NNMG completes its tasks, then off the books.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="section-label">BH Program Status</div>
+<div class="two-col">
+
+  <div class="card">
+    <h3>BH Program — Active Sites</h3>
+    <table class="proj-table">
+      <thead>
+        <tr><th>Site</th><th>Cohort</th><th>Status</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Turning Point</strong></td>
+          <td>Pilot 1</td>
+          <td><span class="pill inflight">In Progress</span></td>
+          <td style="font-size:0.68rem;color:#3b82f6;">Go-live Jun 23 · Cerner ADT in progress (first BH ADT pilot)</td>
+        </tr>
+        <tr>
+          <td><strong>Arbour – HRI</strong></td>
+          <td>Pilot 1</td>
+          <td><span class="pill inflight">In Progress</span></td>
+          <td style="font-size:0.68rem;color:#f59e0b;">CCP live w/ AD · Need go-live date for Messenger</td>
+        </tr>
+        <tr>
+          <td><strong>Arbour Hospital</strong></td>
+          <td>Pilot 1</td>
+          <td><span class="pill inflight">In Progress</span></td>
+          <td style="font-size:0.68rem;color:#6b7280;">Messenger live · MS4 ADT integration</td>
+        </tr>
+        <tr>
+          <td><strong>Three Trails BH</strong></td>
+          <td>—</td>
+          <td><span class="pill inflight">Started</span></td>
+          <td style="font-size:0.68rem;color:#f59e0b;">Kicked off Jun 22 · Opens Sep 22 · bi-weekly cadence · one-off (outside wave strategy)</td>
+        </tr>
+        <tr style="background:#eff6ff;">
+          <td><strong>BH PE Track</strong></td>
+          <td>Jun 2026 – Feb 2027</td>
+          <td><span class="pill inflight">In Progress</span></td>
+          <td style="font-size:0.68rem;color:#1e40af;">~173 existing TC BH facilities · PE module only · Leads: <strong>Charles Ojoko &amp; Jon Phang</strong> (TC) w/ <strong>Dave Kresge</strong> (UHS) · Wave 1 (~10 sites) identified · go-live mid-Aug</td>
+        </tr>
+        <tr style="background:#faf5ff;">
+          <td><strong>BH Core Platform Track</strong></td>
+          <td>Jun 2026 – Feb 2028</td>
+          <td><span class="pill inflight">In Progress</span></td>
+          <td style="font-size:0.68rem;color:#5b21b6;">~51 net-new BH facilities (no TC today) · Core platform: Messenger, Roles, Teams, Auth, PE · Leads: <strong>Michael Martinez &amp; Omar Martinez</strong> (TC) w/ <strong>Robert Henry</strong> (UHS) · Three Trails kicked off 6/22</td>
+        </tr>
+        <tr style="background:#f0fdf4;">
+          <td><strong>Enterprise ADT Track</strong></td>
+          <td>Ongoing</td>
+          <td><span class="pill inflight">In Progress</span></td>
+          <td style="font-size:0.68rem;color:#065f46;">Enable ADT (PE or PCM) across the UHS enterprise, Cerner + MS4 · Leads: <strong>Tracy Hall</strong> w/ <strong>Hélio Cardoso</strong> (technical) · Hélio leading Cerner &amp; MS4 pilot · reuse West/Central/East agents</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top:12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:7px;padding:10px 12px;font-size:0.7rem;color:#1e40af;line-height:1.5;">
+      📋 <strong>BH Deployment Roadmap approved.</strong> ~224 total UHS BH facilities across 2 parallel deployment workstreams plus the enterprise ADT track. 20 months to completion (Jun 2026 – Feb 2028). MS4 and Cerner interface completion are key dependencies. Note: "MVP" terminology retired — now "Core Platform."
+    </div>
+  </div>
+
+</div>
+
+<!-- BH Deployment Roadmap Timelines -->
+<div class="section-label" style="margin-top:20px;">BH Deployment Roadmap — Dual Track</div>
+
+<div class="card" style="margin-bottom:12px;">
+  <h3>BH PE Track: Patient Engagement Rollout — 173 Existing Facilities &nbsp;<span style="font-weight:400;color:#6b7280;text-transform:none;letter-spacing:0;">Charles Ojoko &amp; Jon Phang w/ Dave Kresge · 6 Waves · Jun 2026 – Feb 2027</span></h3>
+  <div style="font-size:0.6rem;color:#9ca3af;display:flex;padding-left:90px;margin-bottom:4px;gap:0;">
+    <span style="flex:1;text-align:left;">Jun '26</span>
+    <span style="flex:1;text-align:center;">Aug '26</span>
+    <span style="flex:1;text-align:center;">Oct '26</span>
+    <span style="flex:1;text-align:center;">Dec '26</span>
+    <span style="flex:1;text-align:right;">Feb '27</span>
+  </div>
+  <div id="bh-t1-gantt"></div>
+  <div style="margin-top:8px;font-size:0.67rem;color:#6b7280;">Each wave: 6-week ramp (Kick Off → Go Live) · Simultaneous rollout across all facilities in region</div>
+</div>
+
+<div class="card">
+  <h3>BH Core Platform Track: Full BH Suite — 51 New Facilities &nbsp;<span style="font-weight:400;color:#6b7280;text-transform:none;letter-spacing:0;">Michael Martinez &amp; Omar Martinez w/ Robert Henry · 13 Waves · Jun 2026 – Feb 2028</span></h3>
+  <div style="font-size:0.6rem;color:#9ca3af;display:flex;padding-left:90px;margin-bottom:4px;">
+    <span style="flex:1;text-align:left;">Jun '26</span>
+    <span style="flex:1;text-align:center;">Jan '27</span>
+    <span style="flex:1;text-align:center;">Jun '27</span>
+    <span style="flex:1;text-align:center;">Jan '28</span>
+    <span style="flex:1;text-align:right;">Feb '28</span>
+  </div>
+  <div id="bh-t2-gantt"></div>
+  <div style="margin-top:8px;font-size:0.67rem;color:#6b7280;">8-week cadence per wave · Core Platform: Messenger, Roles, Teams, Auth, PE · Net-new TC org setup required</div>
+</div>
+
+<script>
+(function() {
+  // ---- Track 1: Jun 1 2026 → Feb 28 2027 (273 days) ----
+  const t1Start = new Date('2026-06-01');
+  const t1End   = new Date('2027-02-28');
+  const t1Span  = t1End - t1Start;
+
+  const t1Waves = [
+    { label:'Wave 1',  start:'2026-07-06', fac:'~10 fac', color:'#3b82f6', active:true },
+    { label:'Wave 2',  start:'2026-08-17', fac:'~30 fac', color:'#6366f1' },
+    { label:'Wave 3',  start:'2026-09-14', fac:'~30 fac', color:'#6366f1' },
+    { label:'Wave 4',  start:'2026-10-19', fac:'~30 fac', color:'#6366f1' },
+    { label:'Wave 5',  start:'2026-11-30', fac:'~40 fac', color:'#6366f1' },
+    { label:'Wave 6',  start:'2027-01-04', fac:'~33 fac', color:'#6366f1' },
+  ];
+  const wkMs = 7*24*3600*1000;
+  const t1Wrap = document.getElementById('bh-t1-gantt');
+  t1Waves.forEach(w => {
+    const s = new Date(w.start);
+    const e = new Date(s.getTime() + 6*wkMs);
+    const left  = ((s - t1Start) / t1Span * 100).toFixed(1);
+    const width = Math.max(((e - s) / t1Span * 100).toFixed(1), 4);
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;margin-bottom:4px;';
+    row.innerHTML = `
+      <div style="width:90px;font-size:0.65rem;color:#374151;flex-shrink:0;padding-right:6px;white-space:nowrap;">${w.label}</div>
+      <div style="flex:1;background:#f3f4f6;border-radius:3px;height:20px;position:relative;">
+        <div style="position:absolute;top:2px;bottom:2px;left:${left}%;width:${width}%;background:${w.color};border-radius:3px;display:flex;align-items:center;padding:0 5px;font-size:0.58rem;font-weight:600;color:white;white-space:nowrap;overflow:hidden;">
+          ${w.fac} · ${s.toLocaleDateString('en-US',{month:'short',day:'numeric'})}${w.active ? ' ▶' : ''}
+        </div>
+      </div>`;
+    t1Wrap.appendChild(row);
+  });
+
+  // ---- Track 2: Jun 1 2026 → Feb 28 2028 (638 days) ----
+  const t2Start = new Date('2026-06-01');
+  const t2End   = new Date('2028-02-28');
+  const t2Span  = t2End - t2Start;
+
+  const t2Waves = [
+    { label:'Pilot 2',  start:'2026-06-29', fac:'2 fac',   color:'#8b5cf6', active:true },
+    { label:'Wave 1',   start:'2026-08-10', fac:'~5 fac',  color:'#a78bfa' },
+    { label:'Wave 2',   start:'2026-09-21', fac:'~4 fac',  color:'#a78bfa' },
+    { label:'Wave 3',   start:'2026-11-02', fac:'~5 fac',  color:'#a78bfa' },
+    { label:'Wave 4',   start:'2026-12-21', fac:'~5 fac',  color:'#a78bfa' },
+    { label:'Wave 5',   start:'2027-02-08', fac:'~4 fac',  color:'#a78bfa' },
+    { label:'Wave 6',   start:'2027-03-22', fac:'~4 fac',  color:'#a78bfa' },
+    { label:'Wave 7',   start:'2027-05-03', fac:'~5 fac',  color:'#a78bfa' },
+    { label:'Wave 8',   start:'2027-06-14', fac:'~3 fac',  color:'#a78bfa' },
+    { label:'Wave 9',   start:'2027-07-26', fac:'~3 fac',  color:'#a78bfa' },
+    { label:'Wave 10',  start:'2027-09-06', fac:'~3 fac',  color:'#a78bfa' },
+    { label:'Wave 11',  start:'2027-10-18', fac:'~3 fac',  color:'#a78bfa' },
+    { label:'Wave 12',  start:'2027-12-06', fac:'~3 fac',  color:'#a78bfa' },
+  ];
+  const t2Wrap = document.getElementById('bh-t2-gantt');
+  t2Waves.forEach(w => {
+    const s = new Date(w.start);
+    const e = new Date(s.getTime() + 8*wkMs);
+    const left  = ((s - t2Start) / t2Span * 100).toFixed(1);
+    const width = Math.max(((e - s) / t2Span * 100).toFixed(1), 3);
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;margin-bottom:4px;';
+    row.innerHTML = `
+      <div style="width:90px;font-size:0.65rem;color:#374151;flex-shrink:0;padding-right:6px;white-space:nowrap;">${w.label}</div>
+      <div style="flex:1;background:#f3f4f6;border-radius:3px;height:20px;position:relative;">
+        <div style="position:absolute;top:2px;bottom:2px;left:${left}%;width:${width}%;background:${w.color};border-radius:3px;display:flex;align-items:center;padding:0 5px;font-size:0.58rem;font-weight:600;color:white;white-space:nowrap;overflow:hidden;">
+          ${w.fac} · ${s.toLocaleDateString('en-US',{month:'short',day:'numeric'})}${w.active ? ' ▶' : ''}
+        </div>
+      </div>`;
+    t2Wrap.appendChild(row);
+  });
+})();
+</script>
+
+<!-- Meeting Notes hidden from overview — see Weekly Status tab -->
+<div style="display:none">
+  <div class="card">
+    <h3>Decisions</h3>
+    <div class="risk-row">
+      <div class="risk-icon">📊</div>
+      <div>
+        <div class="risk-title">Present BH Strategy Options &amp; Timelines to Leadership</div>
+        <div class="risk-detail">Zaw and Robert to clarify strategy options for BH interface rollout and present clear recommendations to senior leadership. Send pre-read to Eric and stakeholders before Friday's leadership call.</div>
+      </div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-icon">📅</div>
+      <div>
+        <div class="risk-title">Create Gantt Chart for BH Timeline</div>
+        <div class="risk-detail">Vanessa &amp; David to prepare updated BH Gantt chart using David's spreadsheet and estimates for leadership review before Friday.</div>
+      </div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-icon">🏥</div>
+      <div>
+        <div class="risk-title">Valley Kickoff — Technical Discovery, Not Full Project Plan</div>
+        <div class="risk-detail">Today's Valley meeting will focus on discovery and understanding Valley's needs. Full project plan to follow once technical environment and risks are clarified. Zaw outlined strategy to focus TC deployment on Valley as the only market without Tiger; Vegas site not deploying for now.</div>
+      </div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-icon">📋</div>
+      <div>
+        <div class="risk-title">Repurpose Wellington Slides for Valley &amp; Future Site Kickoffs</div>
+        <div class="risk-detail">Zaw confirmed the Wellington slide deck will be repurposed for clinical executive presentations and stakeholder engagement at new sites. Zaw to share technical slide deck used for SoCal CNO presentation with Vanessa for today's meeting.</div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:16px;">Open Questions</h3>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div style="font-size:0.71rem;color:#374151;display:flex;gap:8px;"><span style="color:#f59e0b;font-weight:700;flex-shrink:0;">?</span>Estimated MS4 completion date is unclear — product team input needed. (Tracking ticket created; Hélio engaged.)</div>
+      <div style="font-size:0.71rem;color:#374151;display:flex;gap:8px;"><span style="color:#f59e0b;font-weight:700;flex-shrink:0;">?</span>BH rollout scope — PE only or full MVP — not yet determined.</div>
+      <div style="font-size:0.71rem;color:#374151;display:flex;gap:8px;"><span style="color:#f59e0b;font-weight:700;flex-shrink:0;">?</span>Patient contact scope for BH MVP — Zaw to clarify with leadership on Friday call.</div>
+      <div style="font-size:0.71rem;color:#374151;display:flex;gap:8px;"><span style="color:#f59e0b;font-weight:700;flex-shrink:0;">?</span>Duquesne integration at Valley — proprietary system, needs further investigation.</div>
+      <div style="font-size:0.71rem;color:#374151;display:flex;gap:8px;"><span style="color:#f59e0b;font-weight:700;flex-shrink:0;">?</span>Site expansion strategy — new sites vs. cleanup of existing sites.</div>
+    </div>
+
+    <h3 style="margin-top:16px;">Meeting Notes</h3>
+    <div class="risk-row">
+      <div class="risk-icon">🧠</div>
+      <div>
+        <div class="risk-title">BH Priorities</div>
+        <div class="risk-detail">David shared updates from Chris Witt and Dr. Bergman on BH priorities. Patient contacts are <strong>not included in BH MVP scope</strong>. Team agreed to focus on PE as the primary BH goal for this year. David finalized BH pilot list — Eric Goodwin's approval required before proceeding.</div>
+      </div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-icon">🔌</div>
+      <div>
+        <div class="risk-title">Interface Deployment Blockers</div>
+        <div class="risk-detail">Consent form issue resolved — no longer a barrier for interface rollout. MS4 is actively sending data to Tiger at 90% success; team close to enabling interface for Cerner and MS4 clients. Vanessa confirmed Hélio reached out to product team for MS4 estimated completion date; tracking ticket created. Turning Point at same stage as MS4 — product development ongoing before Hélio's sign-off.</div>
+        <div style="margin-top:6px;font-size:0.68rem;color:#ef4444;font-weight:600;">⚠️ Teams (Jun 2): Hélio confirmed St. Mary's and Turning Point will require deletion of all PE patients before enabling HL7 feed — MRN updates not currently supported.</div>
+        <div style="margin-top:4px;font-size:0.68rem;color:#6b7280;">📣 Teams (Jun 2, Vanessa): MS4 completion date urgently needed — full BH cohort deployment is 200+ facilities, not dozens.</div>
+      </div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-icon">🏗️</div>
+      <div>
+        <div class="risk-title">Site Onboarding &amp; Cleanup</div>
+        <div class="risk-detail">Sites already live with TigerConnect require additional cleanup before implementing PE. New sites are easier to onboard. Corona full integration go-live scheduled Q1 2027, with planning starting Q3 this year.</div>
+      </div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-icon">📞</div>
+      <div>
+        <div class="risk-title">Wellington Call Quality</div>
+        <div class="risk-detail">Kelsey running call quality logs for Longton. Vanessa to coordinate with Kelsey to monitor post go-live issues. Zaw requested to join weekly issue troubleshooting meetings to track Longton call quality progress.</div>
+        <div style="margin-top:6px;font-size:0.68rem;color:#ef4444;font-weight:600;">⚠️ Teams (Jun 1, Cary): App crashes are predominantly from UHS orgs, majority specifically from ABM.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Follow-Up Action Items (June 2)</h3>
+    <table class="proj-table">
+      <thead>
+        <tr><th>#</th><th>Action</th><th>Owner</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td><strong>MS4 Interface Readiness</strong> — Follow up with Hélio to confirm readiness for MS4 interface activation for PE patient list population; confirm if any technical barriers remain</td>
+          <td>Vanessa</td>
+          <td><span class="pill notstarted">Open</span></td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td><strong>BH Strategy Deck</strong> — Create slide deck with BH strategy options for Friday executive steering committee call; send to Zaw &amp; Vanessa for review</td>
+          <td>Robert, David</td>
+          <td><span class="pill notstarted">Open</span></td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td><strong>BH Gantt Chart</strong> — Prepare updated BH Gantt chart using David's spreadsheet; send to Zaw for review before Friday leadership meeting</td>
+          <td>Vanessa, David</td>
+          <td><span class="pill notstarted">Open</span></td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td><strong>Bi-Weekly Stakeholder Call</strong> — Set up bi-weekly touch base with Mike, Chris Wood, and Dr. Beglin on BH strategy</td>
+          <td>Zaw</td>
+          <td><span class="pill notstarted">Open</span></td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td><strong>Northern Nevada PE Deadline</strong> — Set end of June as goal for Northern Nevada clinics PE rollout; update dashboard; discuss with Charles and Robert</td>
+          <td>Vanessa, Robert, Charles</td>
+          <td><span class="pill notstarted">Open</span></td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td><strong>ABM Physician Leader Meeting</strong> — Schedule meeting with ABM physician leaders; Vanessa to send availability to Robert</td>
+          <td>Vanessa, Robert</td>
+          <td><span class="pill notstarted">Open</span></td>
+        </tr>
+        <tr>
+          <td>7</td>
+          <td><strong>App Crash Investigation</strong> — Coordinate call with engineering team on Zebra / Imprivata / TC integration crashes</td>
+          <td>Vanessa, Kelsey</td>
+          <td><span class="pill notstarted">Open</span></td>
+        </tr>
+        <tr>
+          <td>8</td>
+          <td><strong>Inland Rancho AD/LDAP Migration</strong> — Prepare kickoff and weekly call for Inland Rancho migration from generic to AD/LDAP; involve Jonesy &amp; Hélio</td>
+          <td>Vanessa</td>
+          <td><span class="pill notstarted">Open</span></td>
+        </tr>
+        <tr>
+          <td>9</td>
+          <td><strong>Friday Leadership Call Framing</strong> — Frame discussion to prioritize Valley deployment and clarify resource allocation between new deployments and Cabral Connect</td>
+          <td>Zaw</td>
+          <td><span class="pill notstarted">Open</span></td>
+        </tr>
+        <tr>
+          <td>10</td>
+          <td><strong>Tracker Update</strong> — Update implementation tracker and BH tracker by midday tomorrow</td>
+          <td>Vanessa</td>
+          <td><span class="pill notstarted">Open</span></td>
+        </tr>
+        <tr>
+          <td>11</td>
+          <td><strong>Valley Technical Deck</strong> — Share technical slide deck for Valley site kickoff call</td>
+          <td>Zaw</td>
+          <td><span class="pill notstarted">Open</span></td>
+        </tr>
+        <tr>
+          <td>12</td>
+          <td><strong>Wellington Call Quality</strong> — Coordinate with Kelsey on call quality log monitoring post go-live; Zaw to join weekly troubleshooting meetings</td>
+          <td>Vanessa, Zaw</td>
+          <td><span class="pill notstarted">Open</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="section-label" style="margin-top:20px;">Risks &amp; Blockers</div>
+<div class="card">
+  <div class="risk-row">
+    <div class="risk-icon">⚠️</div>
+    <div>
+      <div class="risk-title">BH Interface — Cerner and MS4</div>
+      <div class="risk-detail">Cerner and MS4 interface completion are key blockers for the BH PE and Core Platform tracks. First Cerner go-live (Turning Point) complete 6/23; first MS4 go-live (HRI) targets ~7/7.</div>
+    </div>
+  </div>
+  <div class="risk-row">
+    <div class="risk-icon">⚠️</div>
+    <div>
+      <div class="risk-title">BH — Engagement and Adoption from Stakeholders</div>
+      <div class="risk-detail">Stakeholder engagement and adoption is a risk across the BH program as rollout scales to 173+ facilities.</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end tab-bh -->
+
+<!-- Weekly Status Tab -->
+<div id="tab-weekly" class="tab-pane">
+
+  <div class="section-label">Enterprise ADT Track — Updated June 22, 2026</div>
+  <div class="card" style="border-top:3px solid #10b981;margin-bottom:14px;">
+    <h3>Enterprise ADT Track</h3>
+    <div style="font-size:0.72rem;color:#374151;line-height:1.6;">
+      <div><strong>PM:</strong> Tracy Hall <span style="color:#9ca3af;">(out ~2 wks)</span></div>
+      <div><strong>Technical:</strong> Hélio Cardoso <span style="color:#9ca3af;">(out ~2 wks)</span></div>
+      <div><strong>UHS Lead:</strong> Robert Henry</div>
+      <div style="margin-top:6px;color:#6b7280;">Enabling ADT for PE or PCM across UHS enterprise · Cerner &amp; MS4</div>
+      <div style="margin-top:6px;"><span class="pill live">Turning Point live 6/23 ✓ · MS4 / HRI ~7/7</span></div>
+    </div>
+  </div>
+
+  <div class="section-label">Week of June 22, 2026 — Notes &amp; Follow-Ups</div>
+  <div class="two-col">
+
+    <div class="card">
+      <h3>Meeting Notes &amp; Decisions</h3>
+      <div class="risk-row">
+        <div class="risk-icon">🟢</div>
+        <div>
+          <div class="risk-title">Turning Point Live on Cerner ADT (Jun 23)</div>
+          <div class="risk-detail">Program's first Cerner ADT go-live. Les exported existing PE patients then ran the wipe script; HL7 feed enabled. No additional PE training (already using PE) — awareness comms going out that changes are made in Cerner/MS4, not Tiger. MS4's first go-live (HRI) targets ~Jul 7.</div>
+        </div>
+      </div>
+      <div class="risk-row">
+        <div class="risk-icon">📛</div>
+        <div>
+          <div class="risk-title">"MVP" → "Core Platform"</div>
+          <div class="risk-detail">Terminology finalized: "MVP" (and interim "Full Deployment") replaced with <strong>Core Platform</strong> / core products — BH Core Platform and Acute Core Platform. Vanessa updating the dashboard and materials, and sending a Thursday/Friday snapshot email to the full team.</div>
+        </div>
+      </div>
+      <div class="risk-row">
+        <div class="risk-icon">🟣</div>
+        <div>
+          <div class="risk-title">BH PE — Back-End Updates Automated with AI</div>
+          <div class="risk-detail">Wave 1 cohort back-end PE updates <strong>automated with AI</strong> (support from Jonesy &amp; Charles). Full wave rollout begins when David returns; kickoffs on both tracks now target <strong>mid-July (week of 7/13)</strong>. Robert scheduled a BH Playbooks &amp; Waves review for 6/30 (Charles, Michael, Omar, Vanessa) to confirm facilities per wave.</div>
+        </div>
+      </div>
+      <div class="risk-row">
+        <div class="risk-icon">🆕</div>
+        <div>
+          <div class="risk-title">Three Trails Kicked Off — Opens Sept 22</div>
+          <div class="risk-detail">Kickoff 6/22 went well; bi-weekly cadence, ~3 months runway. New BH hospital getting the Core Platform plus early messaging access. Handled as a one-off, outside the BH wave strategy.</div>
+        </div>
+      </div>
+      <div class="risk-row">
+        <div class="risk-icon">🚪</div>
+        <div>
+          <div class="risk-title">IPM (NNMG) — Closing, Out of Scope</div>
+          <div class="risk-detail">Independent physician medical groups confirmed out of scope; corporate team focusing on Acute &amp; BH. NNMG coming off the books this week once tasks complete.</div>
+        </div>
+      </div>
+      <div class="risk-row">
+        <div class="risk-icon">📞</div>
+        <div>
+          <div class="risk-title">Call Quality — Wellington Only</div>
+          <div class="risk-detail">Kelsey's full report (Eduardo's findings) shared with UHS networking (Zaw included). TC data confirms a real WRM-specific issue; UHS networking still to root-cause. ABM confirmed clean — Jaime (Dir. of IT) noted no widespread issues; Pierre's earlier assumption not borne out.</div>
+        </div>
+      </div>
+      <div class="risk-row">
+        <div class="risk-icon">🏥</div>
+        <div>
+          <div class="risk-title">Acute — ABM, Valley &amp; SWHC</div>
+          <div class="risk-detail">ABM Phase 2 (6/30) charge-nurse roles/workflows built for floors 3/5/6 — testing needed (Paulo out from 6/26, Ruben covering). <strong>Valley nurse-call integration blocked</strong> — 6/23 discovery found the Ascom Telligence system needs an upgrade; all VHS sites to one org. SWHC Roles &amp; Teams review held 6/23 (Ken + Alexine Rojas) — generic→individual accounts + nurse licensing.</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid #f3f4f6;">
+        <div style="font-size:0.7rem;font-weight:700;color:#374151;margin-bottom:6px;">Decisions</div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <div style="font-size:0.71rem;color:#374151;display:flex;gap:8px;"><span style="color:#10b981;font-weight:700;flex-shrink:0;">✓</span>Replace "MVP" / "Full Deployment" with "Core Platform" everywhere.</div>
+          <div style="font-size:0.71rem;color:#374151;display:flex;gap:8px;"><span style="color:#10b981;font-weight:700;flex-shrink:0;">✓</span>BH PE wave kickoffs move to mid-July; activate first 10 orgs this week.</div>
+          <div style="font-size:0.71rem;color:#374151;display:flex;gap:8px;"><span style="color:#10b981;font-weight:700;flex-shrink:0;">✓</span>Close IPM (NNMG) as out of scope by end of month.</div>
+          <div style="font-size:0.71rem;color:#374151;display:flex;gap:8px;"><span style="color:#10b981;font-weight:700;flex-shrink:0;">✓</span>Three Trails handled as a one-off (opens Sept 22), outside the wave strategy.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Follow-Up Action Items — June 22</h3>
+      <div class="action-hint">✓ Check the box to mark an item done (strikes it through). Click an owner to edit.</div>
+      <table class="action-table">
+        <thead><tr><th>Done</th><th>Action</th><th>Owner</th></tr></thead>
+        <tbody>
+          <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>PE Org Activation (First 10)</strong> — Run the quick session to activate the initial 10 BH orgs via script this week</td><td class="action-owner" contenteditable="true">Charles, Jonesy</td></tr>
+          <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>BH Playbooks &amp; Waves Review</strong> — Attend Robert's 6/30 session; confirm facilities in each wave</td><td class="action-owner" contenteditable="true">Vanessa, Charles, Michael, Omar</td></tr>
+          <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>Wave Kickoff Scheduling</strong> — Set mid-July kickoff dates; full wave rollout when David returns</td><td class="action-owner" contenteditable="true">David Kresge, Vanessa</td></tr>
+          <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>MS4 / HRI Go-Live Prep</strong> — Confirm HRI Hospital MS4 go-live (~Jul 7); first MS4 site</td><td class="action-owner" contenteditable="true">Robert, Hélio</td></tr>
+          <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>MS4 Facility Codes</strong> — Beth's team (Katie) to confirm 3-digit facility IDs against MS4</td><td class="action-owner" contenteditable="true">Beth, Jillian</td></tr>
+          <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>Turning Point Awareness Comms</strong> — Confirm staff know to make changes in Cerner/MS4, not Tiger</td><td class="action-owner" contenteditable="true">Michael, Robert</td></tr>
+          <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>St. Mary's PE Timeline</strong> — 6/26 call to share ~Jul 20 start; hold site to September</td><td class="action-owner" contenteditable="true">Charles</td></tr>
+          <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>NNMG / IPM Close-Out</strong> — Confirm tasks complete; take off the books this week</td><td class="action-owner" contenteditable="true">Charles, Robert</td></tr>
+          <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>Valley Ascom Upgrade Path</strong> — Integration blocked; scope the Ascom Telligence upgrade needed before nurse-call integration</td><td class="action-owner" contenteditable="true">Jonesy, Paulo, Zaw</td></tr>
+          <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>Valley Scheduling POC</strong> — Source an MSO point of contact for a scheduling demo</td><td class="action-owner" contenteditable="true">Vanessa, Jillian</td></tr>
+          <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>ABM Phase 2 Testing</strong> — Test charge-nurse roles/workflows on floors 3/5/6 before 6/30 (Paulo out — Ruben covering)</td><td class="action-owner" contenteditable="true">Ken, Mai Lein</td></tr>
+          <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>Wellington Call Quality</strong> — Confirm Zaw received Kelsey's report; push UHS networking on root cause</td><td class="action-owner" contenteditable="true">Kelsey, Zaw, Eduardo</td></tr>
+          <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>PTO Coverage</strong> — Paulo→Ruben handoff (out 6/26); cover Hélio &amp; Tracy (out ~2 wks)</td><td class="action-owner" contenteditable="true">Vanessa, Paulo</td></tr>
+          <tr class="action-row"><td><input type="checkbox" class="action-check"></td><td class="action-task"><strong>Update "MVP" → "Core Platform"</strong> — Finish replacing language across all materials</td><td class="action-owner" contenteditable="true">Vanessa</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</div><!-- /tab-weekly -->
+
+<script>
+  function showTab(name) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  // Follow-up action items: check the box to strike through the task
+  document.addEventListener('change', function (e) {
+    if (e.target && e.target.classList.contains('action-check')) {
+      const row = e.target.closest('.action-row');
+      if (row) row.classList.toggle('done', e.target.checked);
+    }
+  });
+</script>
+
+<footer>TigerConnect · UHS Enterprise Implementation · Internal Use Only · Sources: PM Sync &amp; Internal Sync (June 22, 2026) · UHS TigerConnect Program Technical Update (June 22) · Teams Chats · Smartsheet "UHS Facilities: Acute &amp; BH"</footer>
+
+</body>
+</html>
