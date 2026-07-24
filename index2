@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>UHS | TigerConnect Weekly Executive Dashboard</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;background:#f4f6f9;margin:0;color:#233043}
+.header{
+  background:#0b5cab;color:white;padding:18px 24px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.brand{display:flex;align-items:center;gap:16px;}
+.logo{
+  width:52px;height:52px;border-radius:10px;
+  background:white;color:#0b5cab;font-weight:bold;
+  display:flex;align-items:center;justify-content:center;
+}
+.container{padding:20px;}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(360px,1fr));
+  gap:18px;
+}
+.card{
+  background:white;border-radius:12px;padding:18px;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+.card h2{margin-top:0;font-size:20px;}
+.status{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.dot{
+  width:18px;height:18px;border-radius:50%;
+  display:inline-block;
+}
+.green{background:#28a745;}
+.amber{background:#ffb300;}
+.red{background:#dc3545;}
+.section-title{
+  margin-top:14px;
+  font-weight:700;
+  color:#0b5cab;
+}
+ul{margin-top:6px;}
+.footer{
+  margin-top:20px;
+  background:white;
+  border-radius:12px;
+  padding:18px;
+}
+.risk{
+  background:#fff5f5;
+  border-left:4px solid #dc3545;
+  padding:10px;
+  margin:8px 0;
+}
+.decision{
+  background:#fff8e6;
+  border-left:4px solid #ffb300;
+  padding:10px;
+  margin:8px 0;
+}
+.small{font-size:12px;color:#666;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="brand">
+    <div class="logo">TC</div>
+    <div>
+      <h1 style="margin:0;">TigerConnect | UHS Weekly Executive Dashboard</h1>
+      <div>Reporting Period: Last 7 Days</div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+<div class="grid">
+
+  <div class="card">
+    <h2>Acute Workstream</h2>
+
+    <div class="status">
+      <span class="dot amber"></span>
+      <strong>Overall Status</strong>
+    </div>
+
+    <div class="section-title">Highlights</div>
+    <ul>
+      <li>Valley Hospital kickoff and deployment planning remain active.</li>
+      <li>St. Mary's Patient Engagement integration work has started and joint testing is expected to begin during the week of 7/27.</li>
+      <li>Inland & Rancho Springs authentication and account-standardization work is progressing with clinical review activities underway.</li>
+    </ul>
+
+    <div class="section-title">Risks</div>
+    <ul>
+      <li>Valley integration and nurse-call decisions continue to influence downstream deployment readiness.</li>
+      <li>Alan B. Miller Phase 2/3 testing identified room/bed naming convention issues requiring ticket remediation.</li>
+      <li>Legacy ASCOM environment currently limits nurse-call integration options.</li>
+    </ul>
+
+    <div class="section-title">Next Actions</div>
+    <ul>
+      <li>Continue Valley readiness and integration planning.</li>
+      <li>Resolve naming-convention corrective actions.</li>
+      <li>Finalize scope and authentication transition activities.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Behavioral Health – Patient Engagement (PE)</h2>
+
+    <div class="status">
+      <span class="dot amber"></span>
+      <strong>Overall Status</strong>
+    </div>
+
+    <div class="section-title">Highlights</div>
+    <ul>
+      <li>Wave 1 Patient Engagement kickoff completed with strong participation.</li>
+      <li>Site users and administrators are being identified.</li>
+      <li>AD-group creation process has been initiated through ServiceNow workflows.</li>
+      <li>Patient outreach use-case and message-template design activities are underway.</li>
+    </ul>
+
+    <div class="section-title">Risks</div>
+    <ul>
+      <li>Enterprise PE display-name and staff-safety adoption concerns remain the primary program risk.</li>
+      <li>St. Mary's consent requirements continue to impact broader PE expansion planning.</li>
+    </ul>
+
+    <div class="section-title">Next Actions</div>
+    <ul>
+      <li>Complete administrator/user identification.</li>
+      <li>Submit remaining AD-integration requests.</li>
+      <li>Finalize outreach templates and rollout readiness activities.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Behavioral Health – Core Platform</h2>
+
+    <div class="status">
+      <span class="dot green"></span>
+      <strong>Overall Status</strong>
+    </div>
+
+    <div class="section-title">Highlights</div>
+    <ul>
+      <li>BH Core Wave 1 implementation officially kicked off.</li>
+      <li>Weekly implementation cadence established.</li>
+      <li>Messaging organization creation and AD-integration onboarding activities have begun.</li>
+      <li>HL7 integration kickoff activities scheduled for participating Cerner/MS4 locations.</li>
+    </ul>
+
+    <div class="section-title">Achievements</div>
+    <ul>
+      <li>Strong attendance and engagement reported across kickoff sessions.</li>
+      <li>Role, Team, and access-planning activities are progressing.</li>
+      <li>Three Trails preparation and data-collection workshops are underway.</li>
+    </ul>
+
+    <div class="section-title">Next Actions</div>
+    <ul>
+      <li>Continue role/team design workshops.</li>
+      <li>Expand user-access planning.</li>
+      <li>Advance interface and AD integration milestones.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Enterprise ADT / Integration Track</h2>
+
+    <div class="status">
+      <span class="dot amber"></span>
+      <strong>Overall Status</strong>
+    </div>
+
+    <div class="section-title">Highlights</div>
+    <ul>
+      <li>Behavioral Health interface build was reported as completed.</li>
+      <li>HL7 ADT and staff-assignment integration activities remain active.</li>
+      <li>Non-production and production build coordination continues between technical teams.</li>
+    </ul>
+
+    <div class="section-title">Dependencies</div>
+    <ul>
+      <li>Cerner/MS4 interface dependencies continue to affect multiple workstreams.</li>
+      <li>ADT readiness remains a prerequisite for several downstream integrations.</li>
+    </ul>
+
+    <div class="section-title">Next Actions</div>
+    <ul>
+      <li>Advance ticket-driven integration work.</li>
+      <li>Validate enterprise ADT readiness.</li>
+      <li>Coordinate production testing activities.</li>
+    </ul>
+  </div>
+
+</div>
+
+<div class="footer">
+
+  <h2>Executive Program Summary</h2>
+
+  <div class="status">
+    <span class="dot amber"></span>
+    <strong>Enterprise Program Status: AMBER</strong>
+  </div>
+
+  <p>
+    Execution is progressing across Acute and Behavioral Health workstreams.
+    Both Behavioral Health Core and Patient Engagement waves are now underway,
+    while Acute deployment readiness remains focused on Valley Hospital and
+    associated integration dependencies.
+  </p>
+
+  <h3>Leadership Attention Required</h3>
+
+  <div class="risk">
+    Patient Engagement display-name and staff-safety/adoption concerns remain
+    the leading enterprise risk.
+  </div>
+
+  <div class="risk">
+    Valley integration decisions and nurse-call strategy continue to influence
+    deployment sequencing and readiness.
+  </div>
+
+  <div class="decision">
+    Continue alignment on Valley integration approach and enterprise ADT
+    dependencies to avoid downstream schedule impact.
+  </div>
+
+  <h3>Major Wins This Week</h3>
+  <ul>
+    <li>Behavioral Health Core kickoff completed.</li>
+    <li>Behavioral Health Patient Engagement kickoff completed.</li>
+    <li>Patient Engagement risk posture improved from Red toward Amber.</li>
+    <li>Wave 1 rollout execution active across BH workstreams.</li>
+  </ul>
+
+  <div class="small">
+    Grounded from UHS/TigerConnect communications and documents including:
+    UHS and TigerConnect: Enterprise Weekly Executive Status Update | Week of July 13, 2026 (turn1search5),
+    2026-07-20 UHS TigerConnect Program Technical Update Notes (turn1search2),
+    TigerConnect | UHS Patient Engagement (turn1search1),
+    2026-07-20 UHS | TigerConnect - Weekly Project PM Sync Follow-Ups (turn1search3),
+    and Re: UHS | TigerConnect Core Track - Follow-Ups Reminder!! (turn1search4).
+  </div>
+
+</div>
+
+</div>
+</body>
+</html>
